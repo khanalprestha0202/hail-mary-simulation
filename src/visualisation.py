@@ -186,4 +186,57 @@ def print_statistical_summary(all_results):
     print(f"  Avg Beetle Probes/Run:    {statistics.mean(probes):.2f}")
     print(f"  Avg Experiment Success:   {statistics.mean(success_rates):.1f}%")
     print(f"  Avg Rocky Cooperation:    {statistics.mean(cooperation):.1f}")
-    print("="*60) 
+    print("="*60)
+
+def plot_grid(environment, grace, rocky, beetle_probes=None, turn=0):
+    """Real-time colour-coded grid visualisation"""
+    import numpy as np
+    from src.environment import EMPTY, ASTROPHAGE, ADRIAN, HAIL_MARY, BLIP_A, RADIATION, TAUMOEBA
+
+    colour_map = {
+        EMPTY:      [15,  15,  35],
+        ASTROPHAGE: [220, 60,  20],
+        ADRIAN:     [30,  160, 80],
+        HAIL_MARY:  [80,  180, 255],
+        BLIP_A:     [255, 200, 50],
+        RADIATION:  [180, 50,  180],
+        TAUMOEBA:   [50,  220, 150],
+    }
+
+    h, w = environment.height, environment.width
+    img = np.zeros((h, w, 3), dtype=np.uint8)
+
+    for r in range(h):
+        for c in range(w):
+            cell = environment.grid[r][c]
+            img[r, c] = colour_map.get(cell, [100, 100, 100])
+
+    img[grace.row % h, grace.col % w] = [255, 255, 255]
+    img[rocky.row % h, rocky.col % w] = [255, 230, 100]
+
+    if beetle_probes:
+        for probe in beetle_probes:
+            img[probe.row % h, probe.col % w] = [200, 255, 200]
+
+    fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+    ax.imshow(img, interpolation='nearest')
+    ax.set_title(f"Tau Ceti System — Turn {turn} | Knowledge: {grace.knowledge_score} | "
+                 f"Viability: {grace.taumoeba_viability*100:.1f}%", fontsize=11)
+
+    from matplotlib.patches import Patch
+    legend = [
+        Patch(color=[c/255 for c in colour_map[EMPTY]],     label="Empty space"),
+        Patch(color=[c/255 for c in colour_map[ASTROPHAGE]], label="Astrophage"),
+        Patch(color=[c/255 for c in colour_map[ADRIAN]],    label="Planet Adrian"),
+        Patch(color=[c/255 for c in colour_map[RADIATION]], label="Radiation zone"),
+        Patch(color=[c/255 for c in colour_map[TAUMOEBA]],  label="Taumoeba"),
+        Patch(color=[1,1,1],     label="Grace (Hail Mary)"),
+        Patch(color=[1,0.9,0.4], label="Rocky (Blip-A)"),
+    ]
+    ax.legend(handles=legend, loc='upper right', fontsize=8,
+              framealpha=0.85, facecolor='#111122', labelcolor='white')
+    ax.axis('off')
+    plt.tight_layout()
+    plt.savefig(f"results/grid_turn_{turn:03d}.png", dpi=120, bbox_inches='tight')
+    plt.show(block=False)
+    plt.pause(0.1)
