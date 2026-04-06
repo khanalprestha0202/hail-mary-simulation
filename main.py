@@ -1,7 +1,7 @@
 import os
 import random
 import matplotlib
-matplotlib.use('Agg')  # No display needed - saves to file automatically
+matplotlib.use('MacOSX')
 import matplotlib.pyplot as plt
 
 from src.simulation import Simulation
