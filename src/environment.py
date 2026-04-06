@@ -91,6 +91,21 @@ class Environment:
         for row, col, intensity in new_astrophage:
             self.grid[row][col] = ASTROPHAGE
             self.astrophage_intensity[row][col] = intensity
+    
+    def adapt_astrophage_resistance(self, taumoeba_deployed_count):
+        """
+        Expert-level: Astrophage becomes more resistant
+        as Taumoeba is deployed more — simulates evolutionary pressure.
+        """
+        resistance = min(0.5, taumoeba_deployed_count * 0.05)
+        for r in range(self.height):
+            for c in range(self.width):
+                if self.grid[r][c] == ASTROPHAGE:
+                    # Resistant Astrophage regenerates intensity slightly
+                    if random.random() < resistance:
+                        self.astrophage_intensity[r][c] = min(
+                            1.0, self.astrophage_intensity[r][c] + 0.05
+                        )
 
     def apply_taumoeba(self, row, col):
         """Taumoeba reduces Astrophage intensity"""

@@ -220,6 +220,8 @@ class Simulation:
 
         # Random equipment failure check
         self._check_equipment_failure()
+            # Astrophage adapts resistance based on Taumoeba deployment
+        self.environment.adapt_astrophage_resistance(self.grace.taumoeba_samples)
 
         # Record metrics
         self._record_metrics()

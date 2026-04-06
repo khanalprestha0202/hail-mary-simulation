@@ -1,22 +1,115 @@
 import random
 import statistics
 
+
 class ExperimentResult:
-    """Records a single experiment outcome"""
-    def __init__(self, turn, exp_type, outcome, viability, knowledge, notes=""):
-        self.turn = turn
-        self.exp_type = exp_type
-        self.outcome = outcome
+    """Records a single experiment outcome — all results kept for scientific integrity"""
+    def __init__(self, turn, exp_type, outcome, viability, knowledge, strategy, notes=""):
+        self.turn      = turn
+        self.exp_type  = exp_type
+        self.outcome   = outcome
         self.viability = viability
         self.knowledge = knowledge
-        self.notes = notes
+        self.strategy  = strategy
+        self.notes     = notes
 
     def __repr__(self):
-        return f"Turn {self.turn} | {self.exp_type} | {self.outcome} | Viability: {self.viability:.2f} | Knowledge: {self.knowledge}"
+        return (f"Turn {self.turn} | {self.exp_type} | {self.outcome} | "
+                f"Viability: {self.viability:.2f} | Knowledge: {self.knowledge} | "
+                f"Strategy: {self.strategy}")
+
+
+class QLearningStrategy:
+    """
+    Q-Learning agent that learns the best experimental strategy.
+    States  = (knowledge_band, viability_band, rocky_cooperation_band)
+    Actions = 0:conservative  1:balanced  2:aggressive
+    """
+
+    ACTIONS      = ["conservative", "balanced", "aggressive"]
+    LEARNING_RATE  = 0.15
+    DISCOUNT       = 0.90
+    EPSILON_START  = 1.0   # start fully exploratory
+    EPSILON_MIN    = 0.10
+    EPSILON_DECAY  = 0.97
+
+    def __init__(self):
+        self.q_table = {}          # state -> [q_val_0, q_val_1, q_val_2]
+        self.epsilon = self.EPSILON_START
+        self.last_state  = None
+        self.last_action = None
+        self.total_reward = 0.0
+        self.update_count = 0
+
+    def _get_state(self, grace, rocky):
+        """Discretise continuous values into state bands"""
+        k_band    = min(4, grace.knowledge_score // 25)       # 0-4
+        v_band    = min(4, int(grace.taumoeba_viability * 5)) # 0-4
+        coop_band = min(2, rocky.cooperation_level // 34)     # 0-2
+        return (k_band, v_band, coop_band)
+
+    def _ensure_state(self, state):
+        if state not in self.q_table:
+            self.q_table[state] = [0.0, 0.0, 0.0]
+
+    def choose_action(self, grace, rocky):
+        """Epsilon-greedy action selection"""
+        state = self._get_state(grace, rocky)
+        self._ensure_state(state)
+        if random.random() < self.epsilon:
+            action = random.randint(0, 2)   # explore
+        else:
+            action = self.q_table[state].index(max(self.q_table[state]))  # exploit
+        self.last_state  = state
+        self.last_action = action
+        return action, self.ACTIONS[action]
+
+    def update(self, grace, rocky, outcome, viability_gained):
+        """Update Q-table based on experiment outcome"""
+        if self.last_state is None:
+            return
+
+        # Reward function
+        if outcome == "success":
+            reward = 10.0 + viability_gained * 50
+        elif outcome == "partial_success":
+            reward = 3.0  + viability_gained * 20
+        else:
+            reward = -1.0
+
+        new_state = self._get_state(grace, rocky)
+        self._ensure_state(new_state)
+
+        # Q-learning update rule
+        old_q    = self.q_table[self.last_state][self.last_action]
+        max_next = max(self.q_table[new_state])
+        new_q    = old_q + self.LEARNING_RATE * (
+            reward + self.DISCOUNT * max_next - old_q
+        )
+        self.q_table[self.last_state][self.last_action] = new_q
+
+        # Decay epsilon
+        self.epsilon     = max(self.EPSILON_MIN, self.epsilon * self.EPSILON_DECAY)
+        self.total_reward += reward
+        self.update_count += 1
+
+    def get_policy_summary(self):
+        """Return a human-readable summary of what the Q-table has learned"""
+        if not self.q_table:
+            return "No learning data yet."
+        lines = [f"Q-table states explored: {len(self.q_table)}",
+                 f"Total reward accumulated: {self.total_reward:.1f}",
+                 f"Current epsilon: {self.epsilon:.3f}",
+                 f"Updates: {self.update_count}"]
+        return " | ".join(lines)
 
 
 class ExperimentManager:
-    """Manages all scientific experiments - maintains scientific integrity"""
+    """
+    Manages all scientific experiments.
+    Uses Q-learning to adapt strategy based on outcomes.
+    Records ALL results — including failures — for scientific integrity.
+    """
 
     EXPERIMENT_TYPES = [
         "Taumoeba Atmosphere Test",
@@ -30,142 +123,127 @@ class ExperimentManager:
     ]
 
     def __init__(self):
-        self.results = []           # ALL results including failures
-        self.successes = 0
+        self.results         = []
+        self.successes       = 0
         self.partial_successes = 0
-        self.failures = 0
-        self.current_strategy = "random"    # random, conservative, aggressive
-        self.strategy_scores = {
-            "random": 0,
-            "conservative": 0,
-            "aggressive": 0,
-        }
-        self.learning_rate = 0.1
+        self.failures        = 0
+        self.q_learner       = QLearningStrategy()
 
     def run_experiment(self, grace, rocky=None, turn=0):
         """
-        Run a scientific experiment with reinforcement-based learning.
-        Strategy adapts based on previous outcomes.
+        Run one experiment.
+        Q-learner chooses the strategy; outcome updates the Q-table.
         """
         if grace.taumoeba_samples == 0 and grace.astrophage_samples == 0:
             return None, "No samples available."
 
+        # Q-learner picks strategy
+        action_idx, strategy = self.q_learner.choose_action(grace, rocky or _DummyRocky())
+
         exp_type = random.choice(self.EXPERIMENT_TYPES)
-        grace.use_energy(10)
-        grace.equipment_degradation += 2
+        grace.use_energy(8)
+        grace.equipment_degradation = min(100, grace.equipment_degradation + 1)
 
-        # Calculate success probability based on strategy and learning
-        base_prob = 0.25 + (grace.knowledge_score / 400)
-
-        if self.current_strategy == "conservative":
-            success_mod = 0.05
-            partial_mod = 0.25
-        elif self.current_strategy == "aggressive":
-            success_mod = 0.20
-            partial_mod = 0.10
-        else:  # random
-            success_mod = 0.12
-            partial_mod = 0.18
-
-        # Rocky's assistance improves success chances
+        # Base success probability
+        base = 0.30 + (grace.knowledge_score / 250)
         if rocky and rocky.is_alive():
-            base_prob += 0.12 + (rocky.cooperation_level / 500)
+            base += 0.12 + (rocky.cooperation_level / 400)
             exp_type = "Cross-Species " + exp_type
 
+        # Strategy modifiers
+        if strategy == "conservative":
+            s_mod, p_mod = 0.04, 0.22
+        elif strategy == "aggressive":
+            s_mod, p_mod = 0.18, 0.08
+        else:  # balanced
+            s_mod, p_mod = 0.10, 0.15
+
         roll = random.random()
-        total_prob = base_prob + success_mod
 
-        if roll > total_prob + partial_mod:
-            outcome = "failure"
-            knowledge_gain = random.randint(1, 3)
-            viability_change = -0.02
-            notes = "Sample degraded. Recording failure data for future reference."
-            self.failures += 1
-            self.strategy_scores[self.current_strategy] -= 1
-        elif roll > total_prob:
-            outcome = "partial_success"
-            knowledge_gain = random.randint(3, 7)
-            viability_change = random.uniform(0.03, 0.08)
-            notes = "Partial viability detected. Adjusting parameters."
-            self.partial_successes += 1
-            self.strategy_scores[self.current_strategy] += 1
-        else:
-            outcome = "success"
+        if roll < base + s_mod:
+            outcome        = "success"
             knowledge_gain = random.randint(8, 18)
-            viability_change = random.uniform(0.10, 0.20)
-            notes = "Strong viability! Taumoeba adapting to target atmosphere."
+            vgain          = random.uniform(0.10, 0.22)
+            notes          = "Taumoeba strain showing strong viability!"
             self.successes += 1
-            self.strategy_scores[self.current_strategy] += 3
             grace.mission_progress += 5
+        elif roll < base + s_mod + p_mod:
+            outcome        = "partial_success"
+            knowledge_gain = random.randint(3, 8)
+            vgain          = random.uniform(0.03, 0.09)
+            notes          = "Partial viability. Adjusting parameters."
+            self.partial_successes += 1
+        else:
+            outcome        = "failure"
+            knowledge_gain = random.randint(1, 3)
+            vgain          = -0.01
+            notes          = "Sample degraded. Failure recorded for analysis."
+            self.failures  += 1
 
-        # Apply results
-        grace.knowledge_score += knowledge_gain
-        grace.taumoeba_viability = min(1.0, max(0.0, grace.taumoeba_viability + viability_change))
+        grace.knowledge_score     += knowledge_gain
+        grace.taumoeba_viability   = min(1.0, max(0.0,
+            grace.taumoeba_viability + vgain))
+
+        # Update Q-table
+        self.q_learner.update(grace, rocky or _DummyRocky(), outcome, max(0, vgain))
 
         result = ExperimentResult(
-            turn=turn,
-            exp_type=exp_type,
-            outcome=outcome,
+            turn=turn, exp_type=exp_type, outcome=outcome,
             viability=grace.taumoeba_viability,
             knowledge=grace.knowledge_score,
-            notes=notes,
+            strategy=strategy, notes=notes,
         )
         self.results.append(result)
-
-        # Reinforcement learning - adapt strategy based on outcomes
-        self._adapt_strategy()
-
         return result, notes
 
-    def _adapt_strategy(self):
-        """
-        Reinforcement-based strategy adaptation.
-        Switches to the strategy with the highest score.
-        """
-        if len(self.results) % 5 == 0 and len(self.results) > 0:
-            best = max(self.strategy_scores, key=self.strategy_scores.get)
-            if best != self.current_strategy:
-                self.current_strategy = best
-
     def get_statistics(self):
-        """Returns statistical summary of all experiments"""
         if not self.results:
             return {}
-        total = len(self.results)
+        total      = len(self.results)
         viabilities = [r.viability for r in self.results]
-        knowledge_vals = [r.knowledge for r in self.results]
+        knowledge   = [r.knowledge for r in self.results]
         return {
-            "total_experiments": total,
-            "successes": self.successes,
-            "partial_successes": self.partial_successes,
-            "failures": self.failures,
-            "success_rate": round(self.successes / total * 100, 1),
-            "partial_rate": round(self.partial_successes / total * 100, 1),
-            "failure_rate": round(self.failures / total * 100, 1),
-            "avg_viability": round(statistics.mean(viabilities), 3),
-            "max_viability": round(max(viabilities), 3),
-            "final_viability": round(viabilities[-1], 3),
-            "avg_knowledge_gain": round(statistics.mean(knowledge_vals), 1),
-            "current_strategy": self.current_strategy,
-            "strategy_scores": self.strategy_scores,
+            "total_experiments":  total,
+            "successes":          self.successes,
+            "partial_successes":  self.partial_successes,
+            "failures":           self.failures,
+            "success_rate":       round(self.successes / total * 100, 1),
+            "partial_rate":       round(self.partial_successes / total * 100, 1),
+            "failure_rate":       round(self.failures / total * 100, 1),
+            "avg_viability":      round(statistics.mean(viabilities), 3),
+            "max_viability":      round(max(viabilities), 3),
+            "final_viability":    round(viabilities[-1], 3),
+            "avg_knowledge":      round(statistics.mean(knowledge), 1),
+            "current_strategy":   self.q_learner.ACTIONS[
+                                      self.q_learner.last_action
+                                      if self.q_learner.last_action is not None else 1],
+            "q_policy":           self.q_learner.get_policy_summary(),
+            "epsilon":            round(self.q_learner.epsilon, 3),
+            "q_table_size":       len(self.q_learner.q_table),
         }
 
     def get_summary_report(self):
-        """Human-readable experiment summary"""
         stats = self.get_statistics()
         if not stats:
             return "No experiments conducted yet."
         lines = [
-            "=" * 50,
+            "=" * 55,
             "     SCIENTIFIC EXPERIMENT SUMMARY REPORT",
-            "=" * 50,
+            "=" * 55,
             f"Total Experiments:     {stats['total_experiments']}",
             f"Successes:             {stats['successes']} ({stats['success_rate']}%)",
             f"Partial Successes:     {stats['partial_successes']} ({stats['partial_rate']}%)",
             f"Failures:              {stats['failures']} ({stats['failure_rate']}%)",
-            f"Final Viability:       {stats['final_viability'] * 100:.1f}%",
-            f"Avg Viability:         {stats['avg_viability'] * 100:.1f}%",
-            f"Current Strategy:      {stats['current_strategy']}",
-            "=" * 50,
+            f"Final Viability:       {stats['final_viability']*100:.1f}%",
+            f"Q-Learning Policy:     {stats['q_policy']}",
+            f"Q-Table States:        {stats['q_table_size']}",
+            f"Epsilon (exploration): {stats['epsilon']}",
+            "=" * 55,
         ]
         return "\n".join(lines)
+
+
+class _DummyRocky:
+    """Placeholder when Rocky is not yet available"""
+    cooperation_level = 0
+    is_alive = lambda self: False
