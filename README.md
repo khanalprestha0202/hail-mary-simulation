@@ -4,7 +4,7 @@
 **By: Prestha Khanal**  
 
 ## Executive Summary
-
+Multi-agent AI simulation faithfully recreating Andy Weir's Project Hail Mary. Dr. Ryland Grace and Rocky cooperate to breed Taumoeba countering Astrophage threat. All requirements are implemented.
 
 **Key AI Features:**
 - Q-Learning adaptive experiments
@@ -52,7 +52,7 @@ hail-mary-simulation/
 ## Requirements Implementation Matrix
 
 | Req | Description | Implementation | Status |
-|-----|-------------|----------------|--------|
+|-----|-------------|--------------- -|--------|
 | **a** | 20x25 grid w/ wrap | 25x25 toroidal, all cells (Astrophage/Petrova/Adrian/Relativistic zones) | ✅ |
 | **b** | Grace agent | Move/EVA/tunnel/flashbacks/samples/beetles/health/energy | ✅ |
 | **c** | Rocky agent | Xenonite tunnel, sonar chords, repairs/fuel/knowledge sharing | ✅ |
@@ -116,7 +116,7 @@ for run in range(NUM_RUNS):
 plot_multi_run_analysis(results)  # Stats/distributions
 ```
 
-## 📈 Sample Outputs
+## Sample Outputs
 
 **Console Stats:**
 ```
@@ -140,13 +140,6 @@ Avg Knowledge: 148 ±68
 - **Innovation:** Multi-species RL coop + evolutionary threats
 
 **Keywords:** Q-Learning states/actions, toroidal grid, emergent cooperation, evolutionary pressure.
-
-## Professor Demo Script (5 mins)
-1. `python3 main.py` → Watch live stats
-2. Open `results/multi_run_analysis.png`
-3. Show `docs/report.md` UML
-4. Terminal log emergent coop
-5. Git log VC proof
 
 **Contact:** prestha [at] example.com | GitHub: prestha-khanal
 
