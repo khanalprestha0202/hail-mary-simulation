@@ -133,15 +133,4 @@ Avg Knowledge: 148 ±68
 - Q-convergence: aggressive → balanced
 - Astrophage resistance post-20 Taumoeba deployments
 
-## Assessment Evidence
-- **VC History:** Git log shows iterative dev (grid → agents → RL → evals)
-- **Report:** `docs/report.md` (1500+ words, UML, reflections)
-- **Runs:** 20+ w/ matplotlib evals (beyond basic)
-- **Innovation:** Multi-species RL coop + evolutionary threats
 
-**Keywords:** Q-Learning states/actions, toroidal grid, emergent cooperation, evolutionary pressure.
-
-**Contact:** prestha [at] example.com | GitHub: prestha-khanal
-
----
-*Python 3.12 | macOS | Academic Project*
