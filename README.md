@@ -52,7 +52,7 @@ hail-mary-simulation/
 ## Requirements Implementation Matrix
 
 | Req | Description | Implementation | Status |
-|-----|-------------|--------------- -|--------|
+| Status |
 | **a** | 20x25 grid w/ wrap | 25x25 toroidal, all cells (Astrophage/Petrova/Adrian/Relativistic zones) | ✅ |
 | **b** | Grace agent | Move/EVA/tunnel/flashbacks/samples/beetles/health/energy | ✅ |
 | **c** | Rocky agent | Xenonite tunnel, sonar chords, repairs/fuel/knowledge sharing | ✅ |
@@ -140,9 +140,4 @@ Avg Knowledge: 148 ±68
 - **Innovation:** Multi-species RL coop + evolutionary threats
 
 **Keywords:** Q-Learning states/actions, toroidal grid, emergent cooperation, evolutionary pressure.
-
-**Contact:** prestha [at] example.com | GitHub: prestha-khanal
-
----
-*Python 3.12 | macOS | Academic Project*
 
