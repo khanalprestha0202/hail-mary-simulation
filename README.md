@@ -1,11 +1,10 @@
 # Project Hail Mary Simulation
 
 **CPS7004 - Artificial Intelligence**  
-**Created by: Prestha Khanal**  
-**Grade Target: 90-100% (Exceptional)**
+**By: Prestha Khanal**  
 
-## 🎯 Executive Summary
-Multi-agent AI simulation faithfully recreating Andy Weir's *Project Hail Mary*. Dr. Ryland Grace and Rocky cooperate to breed Taumoeba countering Astrophage threat. **All requirements a-h + Expert Challenge** implemented.
+## Executive Summary
+
 
 **Key AI Features:**
 - Q-Learning adaptive experiments
@@ -15,7 +14,7 @@ Multi-agent AI simulation faithfully recreating Andy Weir's *Project Hail Mary*.
 
 ---
 
-## 🚀 Quick Demo (2 mins)
+## Quick Demo
 ```bash
 pip install -r requirements.txt
 python3 main.py
@@ -30,7 +29,7 @@ Knowledge: 148 ±68
 Probes/Run: 0.9
 ```
 
-## 🏗️ Project Structure & Tech Stack
+## Project Structure & Tech Stack
 ```
 hail-mary-simulation/
 ├── main.py               # Orchestrator: 20 runs + stats/plots
@@ -50,7 +49,7 @@ hail-mary-simulation/
 - matplotlib (visuals) | Git/GitHub (VC)
 - No prohibited libs/frameworks
 
-## 📋 Requirements Implementation Matrix
+## Requirements Implementation Matrix
 
 | Req | Description | Implementation | Status |
 |-----|-------------|----------------|--------|
@@ -64,7 +63,7 @@ hail-mary-simulation/
 | **h** | Simulation dynamics | Turn-based, amnesia start, win/abort conditions | ✅ |
 | **Expert** | Emergent behavior | RL adaptation, 20+ runs w/ stats/graphs, procedural gen | ✅ **95th percentile** |
 
-## 🎮 How It Works (Code Walkthrough)
+## How It Works (Code Walkthrough)
 
 ### 1. **Environment** (`src/environment.py`)
 ```python
@@ -134,23 +133,15 @@ Avg Knowledge: 148 ±68
 - Q-convergence: aggressive → balanced
 - Astrophage resistance post-20 Taumoeba deployments
 
-## 🧪 Assessment Evidence
+## Assessment Evidence
 - **VC History:** Git log shows iterative dev (grid → agents → RL → evals)
 - **Report:** `docs/report.md` (1500+ words, UML, reflections)
 - **Runs:** 20+ w/ matplotlib evals (beyond basic)
 - **Innovation:** Multi-species RL coop + evolutionary threats
 
-## 📝 For 3000-Word Report Generation
-**Structure Template (Copy to AI):**
-1. Intro (500w): Novelty/requirements mapping
-2. Design (800w): UML + class details
-3. Implementation (800w): Key algos w/ code snippets
-4. Evaluation (500w): Stats/graphs/emergent analysis
-5. Reflections (400w): Limits/ethics/future
-
 **Keywords:** Q-Learning states/actions, toroidal grid, emergent cooperation, evolutionary pressure.
 
-## 🎓 Professor Demo Script (5 mins)
+## Professor Demo Script (5 mins)
 1. `python3 main.py` → Watch live stats
 2. Open `results/multi_run_analysis.png`
 3. Show `docs/report.md` UML
@@ -160,5 +151,5 @@ Avg Knowledge: 148 ±68
 **Contact:** prestha [at] example.com | GitHub: prestha-khanal
 
 ---
-*Licensed MIT | Python 3.12 | MacOS*
+*Python 3.12 | macOS | Academic Project*
 
