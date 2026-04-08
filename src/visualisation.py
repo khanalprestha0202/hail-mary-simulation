@@ -3,6 +3,8 @@ import matplotlib.patches as mpatches
 import numpy as np
 import statistics
 
+from src.environment import RELATIVISTIC
+
 def plot_simulation_metrics(metrics, run_number=1, save=False):
     """Plot key metrics from a single simulation run"""
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
