@@ -8,8 +8,10 @@ HAIL_MARY = 3
 BLIP_A = 4
 RADIATION = 5
 TAUMOEBA = 6
+RELATIVISTIC = 7  # Optional: Time-dilation zones (req a ext)
 
 CELL_NAMES = {
+    RELATIVISTIC: "Relativistic Zone",
     EMPTY: "Empty Space",
     ASTROPHAGE: "Astrophage Cloud",
     ADRIAN: "Planet Adrian",
@@ -55,12 +57,19 @@ class Environment:
                 self.grid[row][col] = ASTROPHAGE
                 self.astrophage_intensity[row][col] = random.uniform(0.1, 0.5)
 
-        # Place radiation zones
+# Place radiation zones
         for _ in range(8):
             row = random.randint(0, self.height - 1)
             col = random.randint(0, self.width - 1)
             if self.grid[row][col] == EMPTY:
                 self.grid[row][col] = RADIATION
+
+        # Relativistic zones (optional ext)
+        for _ in range(3):
+            row = random.randint(18, self.height - 1)
+            col = random.randint(18, self.width - 1)
+            if self.grid[row][col] == EMPTY:
+                self.grid[row][col] = RELATIVISTIC
 
     def get_cell(self, row, col):
         # Wrap around edges (open space simulation)
@@ -128,6 +137,8 @@ class Environment:
             return int(self.astrophage_intensity[row][col] * 15)
         elif cell == RADIATION:
             return 10
+        elif cell == RELATIVISTIC:
+            return 8  # Time-dilation fatigue
         return 0
 
     def step(self):
@@ -145,6 +156,7 @@ class Environment:
             BLIP_A: "B",
             RADIATION: "R",
             TAUMOEBA: "T",
+            RELATIVISTIC: "W",  # Warp/Relativistic
         }
         print(f"\n=== TAU CETI SYSTEM - Turn {self.turn} ===")
         for row in self.grid:

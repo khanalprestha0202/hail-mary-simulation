@@ -65,11 +65,16 @@ class Simulation:
     def _grace_ai_action(self):
         actions = []
 
-        # Priority 1: Rest if critically low energy
+        # Priority 1: Rest if critically low energy (Protocol: Conserve Resources)
         if self.grace.energy < 20:
             self.grace.rest()
             actions.append("Grace rests to recover energy and health.")
             return actions
+
+        # Protocol Violation Check: Wasteful actions
+        if self.turn % 10 == 0 and self.grace.equipment_degradation > 80:
+            self.rocky.cooperation_level = max(0, self.rocky.cooperation_level - 5)
+            actions.append("Protocol violation: Severe equip degradation! Rocky coop -5.")
 
         # Priority 2: Repair if equipment badly degraded
         if self.grace.equipment_degradation > 65:

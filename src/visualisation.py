@@ -201,6 +201,7 @@ def plot_grid(environment, grace, rocky, beetle_probes=None, turn=0):
         BLIP_A:     [255, 200, 50],
         RADIATION:  [180, 50,  180],
         TAUMOEBA:   [50,  220, 150],
+        RELATIVISTIC: [100, 100, 200],  # Blue warp zones
     }
 
     h, w = environment.height, environment.width
