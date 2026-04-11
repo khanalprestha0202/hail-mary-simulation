@@ -3,3 +3,5 @@ __pycache__/
 .DS_Store
 results/*.png
 venv/
+src/__pycache__/
+*.pyc
