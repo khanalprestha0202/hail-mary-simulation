@@ -1,7 +1,14 @@
 import os
+import sys
 import random
 import matplotlib
-matplotlib.use('MacOSX')
+try:
+    if sys.platform == 'darwin':
+        matplotlib.use('MacOSX')
+    else:
+        matplotlib.use('Agg')
+except Exception:
+    matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from src.simulation import Simulation
