@@ -19,7 +19,6 @@ class Visualiser:
             'Project Hail Mary Simulation',
             color='white', fontsize=16, fontweight='bold'
         )
-        # Detect when user closes window
         self.fig.canvas.mpl_connect(
             'close_event', self._on_close
         )
@@ -46,8 +45,12 @@ class Visualiser:
                     grid_data[x][y] = 6
                 elif cell.cell_type == "planet":
                     grid_data[x][y] = 4
+                elif cell.cell_type == "tunnel":
+                    grid_data[x][y] = 10
                 elif cell.cell_type == "hazard":
                     grid_data[x][y] = 7
+                elif cell.is_time_dilation:
+                    grid_data[x][y] = 11
                 elif cell.astrophage_level > 6:
                     grid_data[x][y] = 3
                 elif cell.astrophage_level > 0:
@@ -55,6 +58,7 @@ class Visualiser:
                 else:
                     grid_data[x][y] = 0
 
+        # Mark agent positions
         grid_data[self.grace.x][self.grace.y] = 8
         grid_data[self.rocky.x][self.rocky.y] = 9
 
@@ -69,10 +73,12 @@ class Visualiser:
             '#FFA500',  # 7 hazard
             '#00FFFF',  # 8 Grace
             '#FF69B4',  # 9 Rocky
+            '#00CED1',  # 10 tunnel
+            '#FFD700',  # 11 time dilation
         ]
 
         cmap = ListedColormap(colors)
-        ax.imshow(grid_data, cmap=cmap, vmin=0, vmax=9)
+        ax.imshow(grid_data, cmap=cmap, vmin=0, vmax=11)
         ax.set_title(
             f'Tau Ceti System - Turn {turn}',
             color='white', fontsize=12
@@ -85,9 +91,11 @@ class Visualiser:
             mpatches.Patch(color='#228B22', label='Planet Adrian'),
             mpatches.Patch(color='#4169E1', label='Hail Mary'),
             mpatches.Patch(color='#9400D3', label='Blip-A'),
+            mpatches.Patch(color='#00CED1', label='Tunnel'),
             mpatches.Patch(color='#cc2200', label='Astrophage'),
             mpatches.Patch(color='#ff0000', label='Dense Astrophage'),
             mpatches.Patch(color='#FFA500', label='Hazard'),
+            mpatches.Patch(color='#FFD700', label='Time Dilation'),
         ]
         ax.legend(
             handles=legend_items,
@@ -123,7 +131,7 @@ class Visualiser:
                 f'{self.grace.taumoeba_samples}',
                 color='white', fontsize=9)
         ax.text(0.5, 6.8,
-                f'Beetle Probes left: '
+                f'Beetle Probes: '
                 f'{self.grace.beetle_probes}',
                 color='white', fontsize=9)
         ax.text(0.5, 6.3,
@@ -143,7 +151,8 @@ class Visualiser:
                 f'{self.rocky.translation_level}%',
                 color='white', fontsize=9)
         ax.text(0.5, 4.2,
-                f'Fuel: {self.rocky.astrophage_fuel}',
+                f'Fuel: {self.rocky.astrophage_fuel} | '
+                f'Contaminated: {self.rocky.ship_contaminated}',
                 color='white', fontsize=9)
 
         # Taumoeba stats
@@ -151,48 +160,69 @@ class Visualiser:
                 color='#90EE90', fontsize=10,
                 fontweight='bold')
         ax.text(0.5, 3.1,
-                f'Earth Survival: '
-                f'{taumoeba.survival_rate_earth:.1%}',
+                f'Earth: {taumoeba.survival_rate_earth:.1%} | '
+                f'Erid: {taumoeba.survival_rate_erid:.1%}',
                 color='white', fontsize=9)
         ax.text(0.5, 2.6,
-                f'Generation: {taumoeba.generation} | '
-                f'Viable: {taumoeba.is_viable()}',
+                f'Gen: {taumoeba.generation} | '
+                f'Mutation: {taumoeba.mutation_rate:.2f}',
                 color='white', fontsize=9)
+        ax.text(0.5, 2.2,
+                f'Earth viable: {taumoeba.is_viable_earth()} | '
+                f'Erid viable: {taumoeba.is_viable_erid()}',
+                color='#90EE90', fontsize=8)
 
         # Breeding log
-        ax.text(0.5, 2.1, '--- Breeding Log ---',
-                color='yellow', fontsize=10,
+        ax.text(0.5, 1.8, '--- Breeding Log ---',
+                color='yellow', fontsize=9,
                 fontweight='bold')
         if taumoeba.breeding_log:
-            recent = taumoeba.breeding_log[-3:]
+            recent = taumoeba.breeding_log[-2:]
             for i, entry in enumerate(recent):
                 color = (
                     '#00FF00' if entry['result'] == 'SUCCESS'
                     else '#FFA500' if entry['result'] == 'PARTIAL'
                     else '#FF0000'
                 )
+                # Use correct key from new taumoeba
+                rate = entry.get(
+                    'survival_rate_earth',
+                    entry.get('survival_rate', 0)
+                )
                 ax.text(
-                    0.5, 1.7 - (i * 0.35),
+                    0.5, 1.4 - (i * 0.35),
                     f"Gen {entry['generation']}: "
                     f"{entry['result']} - "
-                    f"{entry['survival_rate']:.0%}",
+                    f"{rate:.0%}",
                     color=color, fontsize=8
                 )
         else:
-            ax.text(0.5, 1.6,
+            ax.text(0.5, 1.4,
                     'No experiments yet',
                     color='grey', fontsize=8)
 
-        # Viability progress bar
-        progress = min(1.0, taumoeba.survival_rate_earth)
-        ax.text(0.5, 0.85,
-                'Taumoeba Earth Viability:',
-                color='white', fontsize=9)
-        ax.barh(0.4, progress * 9, height=0.3,
+        # Earth viability progress bar
+        earth_progress = min(1.0, taumoeba.survival_rate_earth)
+        ax.text(0.5, 0.9,
+                'Earth Viability:',
+                color='white', fontsize=8)
+        ax.barh(0.55, earth_progress * 4.5, height=0.25,
                 left=0.5, color='#00FF00', alpha=0.8)
-        ax.barh(0.4, 9, height=0.3,
+        ax.barh(0.55, 4.5, height=0.25,
                 left=0.5, color='grey', alpha=0.2)
-        ax.text(9.8, 0.4, f'{progress:.0%}',
+        ax.text(5.2, 0.55, f'{earth_progress:.0%}',
+                color='white', fontsize=8, va='center')
+
+        # Erid viability progress bar
+        erid_progress = min(1.0, taumoeba.survival_rate_erid)
+        ax.text(5.3, 0.9,
+                'Erid Viability:',
+                color='#FF69B4', fontsize=8)
+        ax.barh(0.55, erid_progress * 4, height=0.25,
+                left=5.5, color='#FF69B4', alpha=0.8)
+        ax.barh(0.55, 4, height=0.25,
+                left=5.5, color='grey', alpha=0.2)
+        ax.text(9.7, 0.55, f'{erid_progress:.0%}',
                 color='white', fontsize=8, va='center')
 
     def update(self, turn, taumoeba):
@@ -206,7 +236,7 @@ class Visualiser:
             self.draw_grid(turn)
             self.draw_stats(turn, taumoeba)
             plt.tight_layout()
-            plt.pause(0.1)
+            plt.pause(0.5)
         except Exception:
             self.closed = True
 
@@ -223,38 +253,38 @@ class Visualiser:
 
             if success:
                 ax.text(
-                    0.5, 0.75,
+                    0.5, 0.80,
                     'MISSION SUCCESS!',
                     color='#00FF00', fontsize=36,
                     ha='center', fontweight='bold',
                     transform=ax.transAxes
                 )
                 ax.text(
-                    0.5, 0.58,
+                    0.5, 0.63,
                     'Earth has been saved from Astrophage!',
-                    color='white', fontsize=18,
+                    color='white', fontsize=16,
                     ha='center', transform=ax.transAxes
                 )
             else:
                 ax.text(
-                    0.5, 0.75,
+                    0.5, 0.80,
                     'MISSION FAILED',
                     color='#FF0000', fontsize=36,
                     ha='center', fontweight='bold',
                     transform=ax.transAxes
                 )
                 ax.text(
-                    0.5, 0.58,
+                    0.5, 0.63,
                     'The Astrophage wins...',
-                    color='white', fontsize=18,
+                    color='white', fontsize=16,
                     ha='center', transform=ax.transAxes
                 )
 
             ax.text(
-                0.5, 0.38,
+                0.5, 0.45,
                 f'Turns: {turn}   |   '
                 f'Knowledge: {knowledge}   |   '
-                f'Probes Deployed: {probes}',
+                f'Probes: {probes}',
                 color='#AAAAAA', fontsize=13,
                 ha='center', transform=ax.transAxes
             )

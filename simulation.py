@@ -50,7 +50,7 @@ class Simulation:
                 self.environment, 5, 8
             )
 
-        # Check contamination
+        # Check contamination after gen 5
         if self.taumoeba.generation > 5:
             self.rocky.check_contamination(self.taumoeba)
 
@@ -71,7 +71,7 @@ class Simulation:
                 self.grace.repair_equipment()
             return
 
-        # Treat contamination
+        # Treat contamination if critical
         if (self.rocky.ship_contaminated
                 and self.grace.knowledge >= 50):
             result = self.taumoeba.treat_contamination(
@@ -89,14 +89,17 @@ class Simulation:
               and self.probe_counter < 4):
             self._deploy_probe()
 
-        # Priority 3: Breed for Erid after Earth done
-        elif (self.earth_saved
+        # Priority 3: Breed for Erid if Earth done
+        elif (self.taumoeba.is_viable_earth()
               and not self.taumoeba.is_viable_erid()
               and self.grace.taumoeba_samples >= 2
-              and self.rocky.trust_level >= 50):
-            self.taumoeba.breed_for_erid(
+              and self.rocky.trust_level >= 50
+              and self.grace.knowledge >= 40):
+            result = self.taumoeba.breed_for_erid(
                 self.grace, self.rocky
             )
+            if result:
+                print("Taumoeba viable for Erid!")
 
         # Priority 4: Breed for Earth if 2+ samples
         elif (self.grace.taumoeba_samples >= 2
@@ -235,7 +238,7 @@ class Simulation:
             print("No probes available!")
 
     def _check_conditions(self):
-        """Check all win/lose conditions"""
+        """Check all win and lose conditions"""
         # Earth saved
         if (self.taumoeba.is_viable_earth()
                 and any(p.reached_earth
@@ -251,8 +254,9 @@ class Simulation:
             if not self.erid_saved:
                 self.erid_saved = True
                 print("\n=== ERID IS SAVED! ===")
+                print("Rocky's home star is protected!")
 
-        # Full success message
+        # Both saved
         if self.earth_saved and self.erid_saved:
             print("\n" + "=" * 45)
             print("COMPLETE MISSION SUCCESS!")
@@ -282,7 +286,7 @@ class Simulation:
         print(f"Rocky ship saved: {self.rocky_ship_saved}")
         print(f"Equip failures:   {self.equipment_failures}")
 
-    def run(self, max_turns=80):
+    def run(self, max_turns=100):
         """Run with live visualisation"""
         print("=" * 50)
         print("   HAIL MARY MISSION BEGINS")
