@@ -119,7 +119,6 @@ def plot_statistics(results, num_runs):
     success = results["success_count"]
     failure = num_runs - success
 
-    # Handle 100% success case
     if failure == 0:
         pie_values = [success, 0.0001]
         pie_labels = ['Success', '']
@@ -154,7 +153,6 @@ def plot_statistics(results, num_runs):
         fontweight='bold',
         pad=10
     )
-    # Add centre text
     ax1.text(
         0, 0,
         f'{success}/{num_runs}\nSuccess',
@@ -350,11 +348,12 @@ def plot_statistics(results, num_runs):
             color='#3fb950', fontsize=10,
             fontweight='bold', ha='right'
         )
-        ax6.axhline(
-            y_pos - 0.03,
+        # Divider line using plot
+        ax6.plot(
+            [0.02, 0.98],
+            [y_pos - 0.03, y_pos - 0.03],
             color='#21262d',
             linewidth=0.5,
-            xmin=0.02, xmax=0.98,
             transform=ax6.transAxes
         )
 
