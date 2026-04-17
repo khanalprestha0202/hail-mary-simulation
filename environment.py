@@ -50,88 +50,105 @@ class Environment:
         self.grid[10][5].cell_type = "hail_mary"
         # Place Blip-A spacecraft (Rocky's ship)
         self.grid[10][15].cell_type = "blip_a"
-        # Place planet Adrian with Taumoeba
-        self.grid[5][10].cell_type = "planet"
-        self.grid[5][10].has_taumoeba = True
+
+        # Planet Adrian at (5,8) — NOT on Petrova line!
+        self.grid[5][8].cell_type = "planet"
+        self.grid[5][8].has_taumoeba = True
+        self.grid[5][8].astrophage_level = 0  # Clear planet
+
         # Connecting tunnel between ships
         self.grid[10][10].cell_type = "tunnel"
 
-        # Petrova line - procedurally generated intensity
+        # Petrova line at column 10 — dense Astrophage
         for i in range(self.height):
-            intensity = random.randint(7, 10)
+            intensity = random.randint(6, 9)
             self.grid[i][10].astrophage_level = intensity
 
-        # Random Astrophage clusters - procedural generation
-        cluster_count = random.randint(10, 20)
+        # Make sure planet cell stays clear
+        self.grid[5][8].astrophage_level = 0
+
+        # Random Astrophage clusters
+        cluster_count = random.randint(8, 15)
         for _ in range(cluster_count):
             x = random.randint(0, self.height - 1)
             y = random.randint(0, self.width - 1)
-            if self.grid[x][y].cell_type == "space":
-                self.grid[x][y].astrophage_level = (
-                    random.randint(1, 5)
+            cell = self.grid[x][y]
+            if (cell.cell_type == "space"
+                    and not cell.has_taumoeba):
+                cell.astrophage_level = (
+                    random.randint(1, 4)
                 )
 
-        # Hazard zones - random radiation/debris
-        hazard_count = random.randint(3, 7)
+        # Hazard zones
+        hazard_count = random.randint(3, 6)
         for _ in range(hazard_count):
             x = random.randint(0, self.height - 1)
             y = random.randint(0, self.width - 1)
-            if self.grid[x][y].cell_type == "space":
-                self.grid[x][y].cell_type = "hazard"
+            cell = self.grid[x][y]
+            if (cell.cell_type == "space"
+                    and cell.astrophage_level == 0):
+                cell.cell_type = "hazard"
 
-        # Time dilation zones (near-light-speed segments)
-        for _ in range(3):
+        # Time dilation zones
+        for _ in range(2):
             x = random.randint(0, self.height - 1)
             y = random.randint(0, self.width - 1)
             if self.grid[x][y].cell_type == "space":
                 self.grid[x][y].is_time_dilation = True
 
     def get_cell(self, x, y):
-        """Get cell with edge wrapping for open space"""
+        """Get cell with edge wrapping"""
         return self.grid[x % self.height][y % self.width]
 
     def spread_astrophage(self):
-        """Astrophage spreads each turn dynamically"""
+        """Astrophage spreads and evolves each turn"""
         self.turn += 1
         new_levels = {}
 
         for x in range(self.height):
             for y in range(self.width):
                 cell = self.grid[x][y]
+                # Never spread to planet cell
+                if cell.cell_type == "planet":
+                    continue
                 if cell.astrophage_level > 0:
-                    # Spread chance increases over time
-                    spread_chance = min(0.3, 0.05 + self.turn * 0.002)
-
-                    # Resistance reduces spread chance
+                    spread_chance = min(
+                        0.2,
+                        0.05 + self.turn * 0.001
+                    )
                     spread_chance = max(
                         0.01,
-                        spread_chance - cell.astrophage_resistance * 0.05
+                        spread_chance
+                        - cell.astrophage_resistance * 0.05
                     )
-
                     if random.random() < spread_chance:
-                        nx = (x + random.choice([-1, 1])) % self.height
-                        ny = (y + random.choice([-1, 1])) % self.width
-                        key = (nx, ny)
-                        new_levels[key] = (
-                            new_levels.get(key, 0) + 1
+                        nx = (
+                            (x + random.choice([-1, 1]))
+                            % self.height
                         )
+                        ny = (
+                            (y + random.choice([-1, 1]))
+                            % self.width
+                        )
+                        # Never spread to planet
+                        if (self.grid[nx][ny].cell_type
+                                != "planet"):
+                            key = (nx, ny)
+                            new_levels[key] = (
+                                new_levels.get(key, 0) + 1
+                            )
 
         for (x, y), amount in new_levels.items():
             self.grid[x][y].astrophage_level += amount
 
     def apply_taumoeba_resistance(self, x, y):
-        """
-        When Taumoeba is deployed, Astrophage
-        develops resistance over time
-        """
+        """Astrophage develops resistance to Taumoeba"""
         self.taumoeba_deployed += 1
         cell = self.get_cell(x, y)
-        # Reduce Astrophage but increase resistance
         reduction = max(1, 3 - cell.astrophage_resistance)
         cell.astrophage_level = max(
             0, cell.astrophage_level - reduction
         )
-        # Astrophage develops resistance
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 neighbour = self.get_cell(x + dx, y + dy)
@@ -143,11 +160,7 @@ class Environment:
 
     def trigger_equipment_failure(self):
         """Random equipment failure event"""
-        if random.random() < 0.05:
-            x = random.randint(0, self.height - 1)
-            y = random.randint(0, self.width - 1)
-            if self.grid[x][y].astrophage_level == 0:
-                self.grid[x][y].cell_type = "hazard"
+        if random.random() < 0.03:
             return True
         return False
 
