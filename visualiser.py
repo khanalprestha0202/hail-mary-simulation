@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
@@ -9,6 +11,7 @@ class Visualiser:
         self.environment = environment
         self.grace = grace
         self.rocky = rocky
+        self.closed = False
         plt.ion()
         self.fig, self.axes = plt.subplots(1, 2, figsize=(16, 8))
         self.fig.patch.set_facecolor('#0a0a2e')
@@ -16,6 +19,13 @@ class Visualiser:
             'Project Hail Mary Simulation',
             color='white', fontsize=16, fontweight='bold'
         )
+        # Detect when user closes window
+        self.fig.canvas.mpl_connect(
+            'close_event', self._on_close
+        )
+
+    def _on_close(self, event):
+        self.closed = True
 
     def draw_grid(self, turn):
         ax = self.axes[0]
@@ -74,6 +84,7 @@ class Visualiser:
             mpatches.Patch(color='#FF69B4', label='Rocky'),
             mpatches.Patch(color='#228B22', label='Planet Adrian'),
             mpatches.Patch(color='#4169E1', label='Hail Mary'),
+            mpatches.Patch(color='#9400D3', label='Blip-A'),
             mpatches.Patch(color='#cc2200', label='Astrophage'),
             mpatches.Patch(color='#ff0000', label='Dense Astrophage'),
             mpatches.Patch(color='#FFA500', label='Hazard'),
@@ -98,7 +109,8 @@ class Visualiser:
 
         # Grace stats
         ax.text(0.5, 8.8, '--- Dr. Ryland Grace ---',
-                color='#00FFFF', fontsize=10, fontweight='bold')
+                color='#00FFFF', fontsize=10,
+                fontweight='bold')
         ax.text(0.5, 8.3,
                 f'Health: {self.grace.health} | '
                 f'Energy: {self.grace.energy}',
@@ -107,102 +119,153 @@ class Visualiser:
                 f'Knowledge: {self.grace.knowledge}',
                 color='white', fontsize=9)
         ax.text(0.5, 7.3,
-                f'Taumoeba Samples: {self.grace.taumoeba_samples}',
+                f'Taumoeba Samples: '
+                f'{self.grace.taumoeba_samples}',
                 color='white', fontsize=9)
         ax.text(0.5, 6.8,
-                f'Beetle Probes left: {self.grace.beetle_probes}',
+                f'Beetle Probes left: '
+                f'{self.grace.beetle_probes}',
+                color='white', fontsize=9)
+        ax.text(0.5, 6.3,
+                f'Position: ({self.grace.x}, {self.grace.y})',
                 color='white', fontsize=9)
 
         # Rocky stats
-        ax.text(0.5, 6.1, '--- Rocky (Eridian) ---',
-                color='#FF69B4', fontsize=10, fontweight='bold')
-        ax.text(0.5, 5.6,
+        ax.text(0.5, 5.7, '--- Rocky (Eridian) ---',
+                color='#FF69B4', fontsize=10,
+                fontweight='bold')
+        ax.text(0.5, 5.2,
                 f'Trust: {self.rocky.trust_level}% | '
                 f'Energy: {self.rocky.energy}',
                 color='white', fontsize=9)
-        ax.text(0.5, 5.1,
-                f'Translation: {self.rocky.translation_level}%',
+        ax.text(0.5, 4.7,
+                f'Translation: '
+                f'{self.rocky.translation_level}%',
+                color='white', fontsize=9)
+        ax.text(0.5, 4.2,
+                f'Fuel: {self.rocky.astrophage_fuel}',
                 color='white', fontsize=9)
 
         # Taumoeba stats
-        ax.text(0.5, 4.4, '--- Taumoeba Research ---',
-                color='#90EE90', fontsize=10, fontweight='bold')
-        ax.text(0.5, 3.9,
+        ax.text(0.5, 3.6, '--- Taumoeba Research ---',
+                color='#90EE90', fontsize=10,
+                fontweight='bold')
+        ax.text(0.5, 3.1,
                 f'Earth Survival: '
                 f'{taumoeba.survival_rate_earth:.1%}',
                 color='white', fontsize=9)
-        ax.text(0.5, 3.4,
+        ax.text(0.5, 2.6,
                 f'Generation: {taumoeba.generation} | '
                 f'Viable: {taumoeba.is_viable()}',
                 color='white', fontsize=9)
 
-        # Experiment log
-        ax.text(0.5, 2.7, '--- Breeding Log ---',
-                color='yellow', fontsize=10, fontweight='bold')
+        # Breeding log
+        ax.text(0.5, 2.1, '--- Breeding Log ---',
+                color='yellow', fontsize=10,
+                fontweight='bold')
         if taumoeba.breeding_log:
-            recent = taumoeba.breeding_log[-4:]
+            recent = taumoeba.breeding_log[-3:]
             for i, entry in enumerate(recent):
-                color = ('#00FF00' if entry['result'] == 'SUCCESS'
-                         else '#FFA500' if entry['result'] == 'PARTIAL'
-                         else '#FF0000')
-                ax.text(0.5, 2.2 - (i * 0.4),
-                        f"Gen {entry['generation']}: "
-                        f"{entry['result']} - "
-                        f"{entry['survival_rate']:.0%}",
-                        color=color, fontsize=8)
+                color = (
+                    '#00FF00' if entry['result'] == 'SUCCESS'
+                    else '#FFA500' if entry['result'] == 'PARTIAL'
+                    else '#FF0000'
+                )
+                ax.text(
+                    0.5, 1.7 - (i * 0.35),
+                    f"Gen {entry['generation']}: "
+                    f"{entry['result']} - "
+                    f"{entry['survival_rate']:.0%}",
+                    color=color, fontsize=8
+                )
+        else:
+            ax.text(0.5, 1.6,
+                    'No experiments yet',
+                    color='grey', fontsize=8)
 
-        # Mission progress bar
+        # Viability progress bar
         progress = min(1.0, taumoeba.survival_rate_earth)
-        ax.text(0.5, 0.9,
-                f'Taumoeba Earth Viability:',
+        ax.text(0.5, 0.85,
+                'Taumoeba Earth Viability:',
                 color='white', fontsize=9)
-        ax.barh(0.4, progress * 9, height=0.35,
+        ax.barh(0.4, progress * 9, height=0.3,
                 left=0.5, color='#00FF00', alpha=0.8)
-        ax.barh(0.4, 9, height=0.35,
+        ax.barh(0.4, 9, height=0.3,
                 left=0.5, color='grey', alpha=0.2)
-        ax.text(9.8, 0.4,
-                f'{progress:.0%}',
+        ax.text(9.8, 0.4, f'{progress:.0%}',
                 color='white', fontsize=8, va='center')
 
     def update(self, turn, taumoeba):
-        self.draw_grid(turn)
-        self.draw_stats(turn, taumoeba)
-        plt.tight_layout()
-        plt.pause(0.2)
+        """Update the live visualisation each turn"""
+        try:
+            if self.closed:
+                return
+            if not plt.fignum_exists(self.fig.number):
+                self.closed = True
+                return
+            self.draw_grid(turn)
+            self.draw_stats(turn, taumoeba)
+            plt.tight_layout()
+            plt.pause(0.1)
+        except Exception:
+            self.closed = True
 
     def show_final(self, success, turn, knowledge, probes):
-        plt.ioff()
-        fig, ax = plt.subplots(figsize=(10, 6))
-        fig.patch.set_facecolor('#0a0a2e')
-        ax.set_facecolor('#0a0a2e')
-        ax.axis('off')
+        """Show final mission result screen"""
+        try:
+            plt.ioff()
+            plt.close('all')
 
-        if success:
-            ax.text(0.5, 0.75, 'MISSION SUCCESS!',
+            fig, ax = plt.subplots(figsize=(10, 6))
+            fig.patch.set_facecolor('#0a0a2e')
+            ax.set_facecolor('#0a0a2e')
+            ax.axis('off')
+
+            if success:
+                ax.text(
+                    0.5, 0.75,
+                    'MISSION SUCCESS!',
                     color='#00FF00', fontsize=36,
                     ha='center', fontweight='bold',
-                    transform=ax.transAxes)
-            ax.text(0.5, 0.58,
+                    transform=ax.transAxes
+                )
+                ax.text(
+                    0.5, 0.58,
                     'Earth has been saved from Astrophage!',
                     color='white', fontsize=18,
-                    ha='center', transform=ax.transAxes)
-        else:
-            ax.text(0.5, 0.75, 'MISSION FAILED',
+                    ha='center', transform=ax.transAxes
+                )
+            else:
+                ax.text(
+                    0.5, 0.75,
+                    'MISSION FAILED',
                     color='#FF0000', fontsize=36,
                     ha='center', fontweight='bold',
-                    transform=ax.transAxes)
-            ax.text(0.5, 0.58,
+                    transform=ax.transAxes
+                )
+                ax.text(
+                    0.5, 0.58,
                     'The Astrophage wins...',
                     color='white', fontsize=18,
-                    ha='center', transform=ax.transAxes)
+                    ha='center', transform=ax.transAxes
+                )
 
-        ax.text(0.5, 0.38,
+            ax.text(
+                0.5, 0.38,
                 f'Turns: {turn}   |   '
                 f'Knowledge: {knowledge}   |   '
                 f'Probes Deployed: {probes}',
                 color='#AAAAAA', fontsize=13,
-                ha='center', transform=ax.transAxes)
+                ha='center', transform=ax.transAxes
+            )
 
-        plt.savefig('mission_result.png',
-                    facecolor='#0a0a2e', bbox_inches='tight')
-        plt.show()
+            plt.savefig(
+                'mission_result.png',
+                facecolor='#0a0a2e',
+                bbox_inches='tight'
+            )
+            print("\nClose the result window to exit.")
+            plt.show(block=True)
+
+        except Exception as e:
+            print(f"Visualiser error: {e}")

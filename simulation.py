@@ -31,20 +31,24 @@ class Simulation:
         self._check_conditions()
 
     def _grace_action(self):
-        cell = self.environment.get_cell(self.grace.x, self.grace.y)
+        cell = self.environment.get_cell(
+            self.grace.x, self.grace.y
+        )
         if self.grace.energy < 15:
             self.grace.rest()
         elif self.taumoeba.is_viable():
             self._deploy_probe()
-        elif self.grace.taumoeba_samples >= 2 and self.grace.knowledge >= 20:
+        elif (self.grace.taumoeba_samples >= 2
+              and self.grace.knowledge >= 20):
             result = self.taumoeba.breed(self.grace, self.rocky)
             if result:
-                print("🌍 Taumoeba viable! Deploying beetle probe!")
+                print("Taumoeba viable! Deploying probe!")
                 self._deploy_probe()
         elif cell.cell_type == "planet":
             self.grace.collect_sample(self.environment)
             self.grace.collect_sample(self.environment)
-        elif self.grace.taumoeba_samples >= 1 and self.grace.knowledge >= 20:
+        elif (self.grace.taumoeba_samples >= 1
+              and self.grace.knowledge >= 20):
             self.taumoeba.breed(self.grace, self.rocky)
         else:
             self._move_grace_toward_planet()
@@ -61,6 +65,7 @@ class Simulation:
             dy = 1
         elif self.grace.y > planet_y:
             dy = -1
+
         next_cell = self.environment.get_cell(
             self.grace.x + dx,
             self.grace.y + dy
@@ -82,11 +87,16 @@ class Simulation:
             self.rocky.communicate(self.grace)
         if self.rocky.trust_level >= 20:
             self.rocky.share_knowledge(self.grace)
-        if self.rocky.trust_level >= 30 and self.grace.taumoeba_samples >= 1:
+        if (self.rocky.trust_level >= 30
+                and self.grace.taumoeba_samples >= 1):
             self.rocky.assist_experiment(self.grace)
-        if self.grace.energy < 30 and self.rocky.trust_level >= 50:
-            self.grace.energy = self.rocky.transfer_fuel(self.grace.energy)
-        if self.grace.energy < 20 and self.rocky.trust_level >= 40:
+        if (self.grace.energy < 30
+                and self.rocky.trust_level >= 50):
+            self.grace.energy = self.rocky.transfer_fuel(
+                self.grace.energy
+            )
+        if (self.grace.energy < 20
+                and self.rocky.trust_level >= 40):
             self.rocky.perform_repair(self.grace)
         if self.rocky.energy < 20:
             self.rocky.rest()
@@ -102,8 +112,9 @@ class Simulation:
             self.beetle_probes.append(probe)
             self.grace.beetle_probes -= 1
             self.probe_counter += 1
-            print(f"🛸 Beetle probe {probe.name} launched!")
-            print(f"   Carrying {probe.knowledge_payload} knowledge units!")
+            print(f"Beetle probe {probe.name} launched!")
+            print(f"Carrying {probe.knowledge_payload} "
+                  f"knowledge units to Earth!")
         else:
             print("No probes available to deploy!")
 
@@ -111,21 +122,21 @@ class Simulation:
         if self.taumoeba.is_viable() and any(
                 p.reached_earth for p in self.beetle_probes):
             self.mission_success = True
-            print("\n🌍 ============================================")
+            print("\n=============================================")
             print("   MISSION SUCCESS! EARTH IS SAVED!")
             print("   Taumoeba solution transmitted to humanity!")
-            print("============================================ 🌍\n")
+            print("=============================================\n")
         if self.grace.energy <= 0:
             self.mission_aborted = True
-            print("\n💀 MISSION ABORTED! Grace ran out of energy!")
+            print("\nMISSION ABORTED! Grace ran out of energy!")
         if self.grace.health <= 0:
             self.mission_aborted = True
-            print("\n💀 MISSION ABORTED! Grace died from Astrophage!")
-        if (len(self.grace.experiment_log) >= 5 and
-                self.grace.experiment_log.count("failure") == len(
-                    self.grace.experiment_log)):
+            print("\nMISSION ABORTED! Grace died from Astrophage!")
+        if (len(self.grace.experiment_log) >= 5
+                and self.grace.experiment_log.count("failure")
+                == len(self.grace.experiment_log)):
             self.mission_aborted = True
-            print("\n💀 MISSION ABORTED! All experiments failed!")
+            print("\nMISSION ABORTED! All experiments failed!")
 
     def print_status(self):
         self.grace.status()
@@ -137,28 +148,55 @@ class Simulation:
                 probe.status()
 
     def run(self, max_turns=50):
+        """Run with live matplotlib visualisation"""
         print("=" * 50)
-        print("🚀  HAIL MARY MISSION BEGINS  🚀")
+        print("   HAIL MARY MISSION BEGINS")
         print("=" * 50)
         print("\nGrace wakes from coma...")
         print("He doesn't know who he is or where he is...")
         print("Two crewmates are dead.")
         print("The mission must go on.\n")
 
-        # Start visualiser
-        vis = Visualiser(self.environment, self.grace, self.rocky)
+        vis = Visualiser(
+            self.environment, self.grace, self.rocky
+        )
         self.environment.display()
 
         while (self.turn < max_turns
                and not self.mission_success
                and not self.mission_aborted):
             self.step()
-            # Update live visual every turn
             vis.update(self.turn, self.taumoeba)
             if self.turn % 10 == 0:
                 self.print_status()
                 self.environment.display()
 
+        self._print_summary()
+        vis.show_final(
+            self.mission_success,
+            self.turn,
+            self.grace.knowledge,
+            self.probe_counter
+        )
+
+    def run_text_only(self, max_turns=50):
+        """Run without any graphics - text output only"""
+        print("=" * 50)
+        print("   HAIL MARY MISSION BEGINS")
+        print("=" * 50)
+        self.environment.display()
+
+        while (self.turn < max_turns
+               and not self.mission_success
+               and not self.mission_aborted):
+            self.step()
+            if self.turn % 10 == 0:
+                self.print_status()
+                self.environment.display()
+
+        self._print_summary()
+
+    def _print_summary(self):
         print(f"\n{'=' * 50}")
         print(f"SIMULATION ENDED AT TURN {self.turn}")
         print(f"{'=' * 50}")
@@ -167,14 +205,6 @@ class Simulation:
         print(f"Final Knowledge:  {self.grace.knowledge}")
         print(f"Probes Deployed:  {self.probe_counter}")
         print(f"Taumoeba viable:  {self.taumoeba.is_viable()}")
-        print(f"Taumoeba Earth survival: "
+        print(f"Earth survival:   "
               f"{self.taumoeba.survival_rate_earth:.1%}")
         self.print_status()
-
-        # Show final result screen
-        vis.show_final(
-            self.mission_success,
-            self.turn,
-            self.grace.knowledge,
-            self.probe_counter
-        )
