@@ -21,13 +21,14 @@ def run_multiple_simulations(num_runs=20):
         print(f"Run {i + 1}/{num_runs}...", end=" ")
         sim = Simulation()
 
-        # Run silently
+        # Suppress all print output during run
         import io
         import sys
         old_stdout = sys.stdout
         sys.stdout = io.StringIO()
 
-        sim.run(max_turns=100)
+        # Use text only - NO graphics
+        sim.run_text_only(max_turns=100)
 
         sys.stdout = old_stdout
 
@@ -42,10 +43,10 @@ def run_multiple_simulations(num_runs=20):
         if sim.mission_success:
             results["success_count"] += 1
             results["outcomes"].append("Success")
-            print("✅ Success")
+            print("SUCCESS")
         else:
             results["outcomes"].append("Failed")
-            print("❌ Failed")
+            print("Failed")
 
     return results
 
@@ -53,13 +54,14 @@ def run_multiple_simulations(num_runs=20):
 def print_statistics(results, num_runs):
     """Print statistical summary"""
     print("\n" + "=" * 55)
-    print("         SIMULATION STATISTICS REPORT")
+    print("      SIMULATION STATISTICS REPORT")
     print("=" * 55)
 
     success_rate = results["success_count"] / num_runs * 100
     print(f"\nTotal Runs:          {num_runs}")
     print(f"Successful Missions: {results['success_count']}")
-    print(f"Failed Missions:     {num_runs - results['success_count']}")
+    print(f"Failed Missions:     "
+          f"{num_runs - results['success_count']}")
     print(f"Success Rate:        {success_rate:.1f}%")
 
     print(f"\n--- Turns to Complete ---")
@@ -80,9 +82,12 @@ def print_statistics(results, num_runs):
     print(f"Max:     {np.max(results['probes_list'])}")
 
     print(f"\n--- Taumoeba Earth Survival Rate ---")
-    print(f"Average: {np.mean(results['survival_rates']):.1%}")
-    print(f"Min:     {np.min(results['survival_rates']):.1%}")
-    print(f"Max:     {np.max(results['survival_rates']):.1%}")
+    print(f"Average: "
+          f"{np.mean(results['survival_rates']):.1%}")
+    print(f"Min:     "
+          f"{np.min(results['survival_rates']):.1%}")
+    print(f"Max:     "
+          f"{np.max(results['survival_rates']):.1%}")
     print("=" * 55)
 
 
@@ -91,25 +96,18 @@ def plot_statistics(results, num_runs):
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
     fig.patch.set_facecolor('#0a0a2e')
     fig.suptitle(
-        'Project Hail Mary - Simulation Statistics\n'
+        f'Project Hail Mary - Simulation Statistics '
         f'({num_runs} runs)',
         color='white', fontsize=16, fontweight='bold'
     )
 
-    plot_style = {
-        'facecolor': '#0a0a2e',
-        'title_color': 'white',
-        'label_color': 'white',
-        'tick_color': 'white'
-    }
-
     def style_ax(ax, title, xlabel, ylabel):
         ax.set_facecolor('#1a1a3e')
-        ax.set_title(title, color=plot_style['title_color'],
+        ax.set_title(title, color='white',
                      fontsize=11, fontweight='bold')
-        ax.set_xlabel(xlabel, color=plot_style['label_color'])
-        ax.set_ylabel(ylabel, color=plot_style['label_color'])
-        ax.tick_params(colors=plot_style['tick_color'])
+        ax.set_xlabel(xlabel, color='white')
+        ax.set_ylabel(ylabel, color='white')
+        ax.tick_params(colors='white')
         for spine in ax.spines.values():
             spine.set_edgecolor('#444444')
 
@@ -117,89 +115,128 @@ def plot_statistics(results, num_runs):
     ax1 = axes[0, 0]
     success = results["success_count"]
     failure = num_runs - success
-    colors = ['#00FF00', '#FF0000']
+    wedge_colors = ['#00FF00', '#FF0000']
     ax1.pie(
         [success, failure],
         labels=['Success', 'Failed'],
-        colors=colors,
+        colors=wedge_colors,
         autopct='%1.1f%%',
-        textprops={'color': 'white'}
+        textprops={'color': 'white', 'fontsize': 11}
     )
     ax1.set_facecolor('#0a0a2e')
-    ax1.set_title('Mission Outcomes',
-                  color='white', fontsize=11, fontweight='bold')
+    ax1.set_title(
+        'Mission Outcomes',
+        color='white', fontsize=11, fontweight='bold'
+    )
 
     # 2. Turns histogram
     ax2 = axes[0, 1]
-    ax2.hist(results["turns_list"], bins=10,
-             color='#4169E1', edgecolor='white', alpha=0.8)
-    style_ax(ax2, 'Turns to Complete',
+    ax2.hist(
+        results["turns_list"], bins=10,
+        color='#4169E1', edgecolor='white', alpha=0.8
+    )
+    style_ax(ax2, 'Turns to Complete Mission',
              'Number of Turns', 'Frequency')
-    ax2.axvline(np.mean(results["turns_list"]),
-                color='#00FFFF', linestyle='--',
-                label=f'Mean: {np.mean(results["turns_list"]):.1f}')
+    ax2.axvline(
+        np.mean(results["turns_list"]),
+        color='#00FFFF', linestyle='--', linewidth=2,
+        label=f'Mean: {np.mean(results["turns_list"]):.1f}'
+    )
     ax2.legend(facecolor='#1a1a3e', labelcolor='white')
 
-    # 3. Knowledge scores
+    # 3. Knowledge scores scatter
     ax3 = axes[0, 2]
     run_numbers = list(range(1, num_runs + 1))
-    colors_scatter = ['#00FF00' if o == 'Success' else '#FF0000'
-                      for o in results["outcomes"]]
-    ax3.scatter(run_numbers, results["knowledge_list"],
-                c=colors_scatter, s=80, alpha=0.8)
-    ax3.axhline(np.mean(results["knowledge_list"]),
-                color='#00FFFF', linestyle='--',
-                label=f'Mean: {np.mean(results["knowledge_list"]):.0f}')
+    dot_colors = [
+        '#00FF00' if o == 'Success' else '#FF0000'
+        for o in results["outcomes"]
+    ]
+    ax3.scatter(
+        run_numbers, results["knowledge_list"],
+        c=dot_colors, s=100, alpha=0.8, zorder=5
+    )
+    ax3.axhline(
+        np.mean(results["knowledge_list"]),
+        color='#00FFFF', linestyle='--', linewidth=2,
+        label=f'Mean: '
+              f'{np.mean(results["knowledge_list"]):.0f}'
+    )
     style_ax(ax3, 'Knowledge Score Per Run',
              'Run Number', 'Knowledge Score')
     ax3.legend(facecolor='#1a1a3e', labelcolor='white')
 
-    # 4. Taumoeba survival rates
+    # 4. Taumoeba survival rates bar chart
     ax4 = axes[1, 0]
-    ax4.bar(run_numbers, results["survival_rates"],
-            color='#228B22', edgecolor='white', alpha=0.8)
-    ax4.axhline(0.8, color='#00FFFF', linestyle='--',
-                label='Viability threshold (80%)')
-    ax4.axhline(np.mean(results["survival_rates"]),
-                color='yellow', linestyle=':',
-                label=f'Mean: {np.mean(results["survival_rates"]):.1%}')
+    bar_colors = [
+        '#00FF00' if r >= 0.8 else '#FFA500' if r >= 0.5
+        else '#FF0000'
+        for r in results["survival_rates"]
+    ]
+    ax4.bar(
+        run_numbers, results["survival_rates"],
+        color=bar_colors, edgecolor='white', alpha=0.8
+    )
+    ax4.axhline(
+        0.8, color='#00FFFF', linestyle='--',
+        linewidth=2, label='Viability threshold (80%)'
+    )
+    ax4.axhline(
+        np.mean(results["survival_rates"]),
+        color='yellow', linestyle=':',
+        linewidth=2,
+        label=f'Mean: '
+              f'{np.mean(results["survival_rates"]):.1%}'
+    )
     style_ax(ax4, 'Taumoeba Earth Survival Rate',
              'Run Number', 'Survival Rate')
     ax4.set_ylim(0, 1.1)
-    ax4.legend(facecolor='#1a1a3e', labelcolor='white', fontsize=8)
+    ax4.legend(
+        facecolor='#1a1a3e', labelcolor='white',
+        fontsize=8
+    )
 
-    # 5. Probes deployed
+    # 5. Probes deployed bar chart
     ax5 = axes[1, 1]
     probe_counts = [0, 1, 2, 3, 4]
-    probe_freq = [results["probes_list"].count(p)
-                  for p in probe_counts]
-    ax5.bar(probe_counts, probe_freq,
-            color='#9400D3', edgecolor='white', alpha=0.8)
-    style_ax(ax5, 'Beetle Probes Deployed',
-             'Probes Deployed', 'Frequency')
+    probe_freq = [
+        results["probes_list"].count(p)
+        for p in probe_counts
+    ]
+    ax5.bar(
+        probe_counts, probe_freq,
+        color='#9400D3', edgecolor='white', alpha=0.8
+    )
+    style_ax(ax5, 'Beetle Probes Deployed Distribution',
+             'Number of Probes Deployed', 'Frequency')
     ax5.set_xticks(probe_counts)
 
     # 6. Turns boxplot
     ax6 = axes[1, 2]
-    bp = ax6.boxplot(
+    ax6.boxplot(
         results["turns_list"],
         patch_artist=True,
         boxprops=dict(facecolor='#4169E1', color='white'),
         medianprops=dict(color='#00FFFF', linewidth=2),
         whiskerprops=dict(color='white'),
         capprops=dict(color='white'),
-        flierprops=dict(color='white', markeredgecolor='white')
+        flierprops=dict(
+            color='white', markeredgecolor='white'
+        )
     )
-    style_ax(ax6, 'Turns Distribution',
-             'Simulation', 'Turns')
-    ax6.set_xticks([])
+    style_ax(ax6, 'Turns Distribution (Boxplot)',
+             'All Runs', 'Number of Turns')
+    ax6.tick_params(axis='x', colors='white')
 
     plt.tight_layout()
-    plt.savefig('simulation_statistics.png',
-                facecolor='#0a0a2e', bbox_inches='tight',
-                dpi=150)
-    print("\nStatistics graph saved as 'simulation_statistics.png'")
-    plt.show()
+    plt.savefig(
+        'simulation_statistics.png',
+        facecolor='#0a0a2e',
+        bbox_inches='tight',
+        dpi=150
+    )
+    print("\nGraph saved as 'simulation_statistics.png'")
+    print("Close the graph window to exit.")
+    plt.show(block=True)
 
 
 if __name__ == "__main__":
