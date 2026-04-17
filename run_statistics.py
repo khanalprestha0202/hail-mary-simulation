@@ -87,12 +87,12 @@ def print_statistics(results, num_runs):
 
 def plot_statistics(results, num_runs):
     """Create clean professional statistical graphs"""
-    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
     fig.patch.set_facecolor('#0d1117')
     fig.suptitle(
         'Project Hail Mary — Simulation Statistics',
-        color='white', fontsize=18,
-        fontweight='bold', y=1.01
+        color='white', fontsize=16,
+        fontweight='bold', y=0.98
     )
 
     def style_ax(ax, title, xlabel, ylabel):
