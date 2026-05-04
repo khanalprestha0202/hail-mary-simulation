@@ -1,103 +1,121 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+from matplotlib.patches import FancyBboxPatch
 import matplotlib.patheffects as pe
 
 
 def draw_class_diagram():
-    """Generate Class Diagram"""
-    fig, ax = plt.subplots(1, 1, figsize=(20, 14))
-    fig.patch.set_facecolor('#0d1117')
-    ax.set_facecolor('#0d1117')
-    ax.set_xlim(0, 20)
-    ax.set_ylim(0, 14)
+    """Generate Clean Light Class Diagram"""
+    fig, ax = plt.subplots(1, 1, figsize=(22, 16))
+    fig.patch.set_facecolor('white')
+    ax.set_facecolor('#f8f9fa')
+    ax.set_xlim(0, 22)
+    ax.set_ylim(0, 16)
     ax.axis('off')
 
-    ax.text(10, 13.5,
+    ax.text(11, 15.5,
             'Project Hail Mary — Class Diagram',
-            color='white', fontsize=16,
-            fontweight='bold', ha='center')
+            color='#1a1a2e', fontsize=18,
+            fontweight='bold', ha='center',
+            fontfamily='sans-serif')
 
     def draw_class_box(ax, x, y, width, height,
                        class_name, attributes, methods,
-                       color='#58a6ff'):
+                       header_color, border_color):
+        # Shadow
+        shadow = FancyBboxPatch(
+            (x + 0.08, y - 0.08), width, height,
+            boxstyle="round,pad=0.1",
+            facecolor='#cccccc',
+            edgecolor='none',
+            linewidth=0,
+            zorder=1
+        )
+        ax.add_patch(shadow)
+
         # Main box
         box = FancyBboxPatch(
             (x, y), width, height,
             boxstyle="round,pad=0.1",
-            facecolor='#161b22',
-            edgecolor=color,
-            linewidth=2
+            facecolor='white',
+            edgecolor=border_color,
+            linewidth=2,
+            zorder=2
         )
         ax.add_patch(box)
 
-        # Class name background
+        # Header
         header = FancyBboxPatch(
-            (x, y + height - 0.6), width, 0.6,
+            (x, y + height - 0.65), width, 0.65,
             boxstyle="round,pad=0.05",
-            facecolor=color,
-            edgecolor=color,
-            linewidth=1,
-            alpha=0.8
+            facecolor=header_color,
+            edgecolor=border_color,
+            linewidth=2,
+            zorder=3
         )
         ax.add_patch(header)
 
         # Class name
-        ax.text(x + width/2, y + height - 0.3,
+        ax.text(x + width/2, y + height - 0.32,
                 class_name,
-                color='white', fontsize=9,
+                color='white', fontsize=10,
                 fontweight='bold', ha='center',
-                va='center')
+                va='center', zorder=4)
+
+        # Divider line attributes/methods
+        mid_y = y + height - 0.65
+        attr_start = mid_y - 0.35
+        for attr in attributes:
+            ax.text(x + 0.2, attr_start,
+                    attr, color='#333333',
+                    fontsize=7.5, va='center', zorder=4)
+            attr_start -= 0.3
 
         # Divider line
-        ax.plot([x, x + width],
-                [y + height - 0.65, y + height - 0.65],
-                color=color, linewidth=1, alpha=0.5)
-
-        # Attributes
-        attr_start = y + height - 0.9
-        for attr in attributes:
-            ax.text(x + 0.15, attr_start,
-                    attr, color='#8b949e',
-                    fontsize=7, va='center')
-            attr_start -= 0.28
-
-        # Divider
-        ax.plot([x, x + width],
-                [attr_start + 0.1, attr_start + 0.1],
-                color=color, linewidth=0.5,
-                alpha=0.3, linestyle='--')
+        div_y = attr_start + 0.1
+        ax.plot([x + 0.1, x + width - 0.1],
+                [div_y, div_y],
+                color=border_color,
+                linewidth=1, alpha=0.5, zorder=4)
 
         # Methods
-        method_start = attr_start - 0.1
+        method_start = div_y - 0.28
         for method in methods:
-            ax.text(x + 0.15, method_start,
-                    method, color='#3fb950',
-                    fontsize=7, va='center')
-            method_start -= 0.28
+            ax.text(x + 0.2, method_start,
+                    method, color='#1a5276',
+                    fontsize=7.5, va='center',
+                    fontweight='bold', zorder=4)
+            method_start -= 0.3
 
     def draw_arrow(ax, x1, y1, x2, y2,
-                   label='', color='#58a6ff'):
+                   label='', color='#555555'):
         ax.annotate(
             '',
             xy=(x2, y2), xytext=(x1, y1),
             arrowprops=dict(
                 arrowstyle='->', color=color,
-                lw=1.5
-            )
+                lw=1.8,
+                connectionstyle='arc3,rad=0.0'
+            ),
+            zorder=5
         )
         if label:
             mx = (x1 + x2) / 2
             my = (y1 + y2) / 2
-            ax.text(mx, my + 0.1, label,
-                    color=color, fontsize=7,
-                    ha='center', style='italic')
-
-    # --- Draw all classes ---
+            ax.text(mx + 0.1, my + 0.15, label,
+                    color=color, fontsize=8,
+                    ha='center', style='italic',
+                    bbox=dict(
+                        facecolor='white',
+                        edgecolor='none',
+                        alpha=0.8,
+                        pad=1
+                    ),
+                    zorder=6)
 
     # Simulation (centre top)
     draw_class_box(
-        ax, 7.5, 9.5, 5, 3.5,
+        ax, 7.5, 10.0, 6, 5.0,
         'Simulation',
         ['- grace: Grace',
          '- rocky: Rocky',
@@ -105,22 +123,24 @@ def draw_class_diagram():
          '- environment: Environment',
          '- beetle_probes: list',
          '- turn: int',
-         '- mission_success: bool'],
+         '- mission_success: bool',
+         '- earth_saved: bool',
+         '- erid_saved: bool'],
         ['+ step()',
          '+ run(max_turns)',
          '+ run_text_only()',
          '+ _grace_action()',
          '+ _rocky_action()',
          '+ _deploy_probe()'],
-        color='#f0883e'
+        '#e67e22', '#d35400'
     )
 
     # Environment (left)
     draw_class_box(
-        ax, 0.5, 8.5, 4, 3.5,
+        ax, 0.3, 9.5, 5, 4.5,
         'Environment',
-        ['- width: int',
-         '- height: int',
+        ['- width: int = 20',
+         '- height: int = 20',
          '- grid: Cell[][]',
          '- turn: int',
          '- taumoeba_deployed: int'],
@@ -130,25 +150,25 @@ def draw_class_diagram():
          '+ apply_taumoeba_resistance()',
          '+ trigger_equipment_failure()',
          '+ display()'],
-        color='#58a6ff'
+        '#2980b9', '#1a5276'
     )
 
-    # Cell (far left)
+    # Cell (bottom left)
     draw_class_box(
-        ax, 0.5, 5.0, 4, 3.0,
+        ax, 0.3, 5.5, 5, 3.5,
         'Cell',
         ['- cell_type: str',
          '- astrophage_level: int',
          '- astrophage_resistance: int',
          '- has_taumoeba: bool',
          '- is_time_dilation: bool'],
-        ['+ __str__()'],
-        color='#58a6ff'
+        ['+ __str__(): str'],
+        '#2980b9', '#1a5276'
     )
 
     # Grace (right)
     draw_class_box(
-        ax, 15.5, 8.0, 4, 4.5,
+        ax, 16.5, 9.0, 5.2, 5.5,
         'Grace',
         ['- health: int',
          '- energy: int',
@@ -156,7 +176,8 @@ def draw_class_diagram():
          '- taumoeba_samples: int',
          '- beetle_probes: int',
          '- strategy_weights: dict',
-         '- experiment_history: dict'],
+         '- experiment_history: dict',
+         '- equipment_damaged: bool'],
         ['+ move()',
          '+ collect_sample()',
          '+ conduct_experiment()',
@@ -164,12 +185,12 @@ def draw_class_diagram():
          '+ flashback()',
          '+ travel_tunnel()',
          '+ perform_eva()'],
-        color='#00FFFF'
+        '#16a085', '#0e6655'
     )
 
-    # Rocky (far right)
+    # Rocky (far right bottom)
     draw_class_box(
-        ax, 15.5, 4.0, 4, 3.5,
+        ax, 16.5, 4.0, 5.2, 4.5,
         'Rocky',
         ['- health: int',
          '- energy: int',
@@ -183,12 +204,12 @@ def draw_class_diagram():
          '+ transfer_fuel()',
          '+ conduct_reconnaissance()',
          '+ assist_experiment()'],
-        color='#FF69B4'
+        '#8e44ad', '#6c3483'
     )
 
     # Taumoeba (bottom centre)
     draw_class_box(
-        ax, 7.5, 4.5, 5, 3.5,
+        ax, 7.5, 4.5, 6, 4.5,
         'Taumoeba',
         ['- survival_rate_earth: float',
          '- survival_rate_erid: float',
@@ -200,12 +221,12 @@ def draw_class_diagram():
          '+ consume_astrophage()',
          '+ is_viable_earth()',
          '+ is_viable_erid()'],
-        color='#3fb950'
+        '#27ae60', '#1e8449'
     )
 
-    # BeetleProbe (bottom left)
+    # BeetleProbe (bottom far left)
     draw_class_box(
-        ax, 0.5, 1.0, 4, 3.5,
+        ax, 0.3, 1.0, 5, 4.0,
         'BeetleProbe',
         ['- name: str',
          '- knowledge_payload: int',
@@ -215,430 +236,481 @@ def draw_class_diagram():
         ['+ navigate()',
          '+ configure()',
          '+ status()'],
-        color='#9400D3'
+        '#c0392b', '#922b21'
     )
 
-    # --- Draw arrows ---
-    # Simulation uses Environment
-    draw_arrow(ax, 7.5, 11.0, 4.5, 11.0,
-               'uses', '#58a6ff')
-    # Simulation controls Grace
-    draw_arrow(ax, 12.5, 11.5, 15.5, 11.5,
-               'controls', '#00FFFF')
-    # Simulation controls Rocky
-    draw_arrow(ax, 12.5, 10.5, 15.5, 6.5,
-               'controls', '#FF69B4')
-    # Simulation manages Taumoeba
-    draw_arrow(ax, 10.0, 9.5, 10.0, 8.0,
-               'manages', '#3fb950')
-    # Simulation deploys BeetleProbe
-    draw_arrow(ax, 7.5, 10.0, 4.5, 3.5,
-               'deploys', '#9400D3')
-    # Environment contains Cell
-    draw_arrow(ax, 2.5, 8.5, 2.5, 8.0,
-               'contains', '#58a6ff')
-    # Grace experiments on Taumoeba
-    draw_arrow(ax, 15.5, 9.5, 12.5, 7.0,
-               'experiments', '#3fb950')
-    # Rocky cooperates with Grace
-    draw_arrow(ax, 15.5, 7.0, 15.5, 8.0,
-               'cooperates', '#FF69B4')
+    # Arrows
+    draw_arrow(ax, 7.5, 12.5, 5.3, 12.0,
+               'uses', '#2980b9')
+    draw_arrow(ax, 13.5, 13.5, 16.5, 12.5,
+               'controls', '#16a085')
+    draw_arrow(ax, 13.5, 11.5, 16.5, 7.0,
+               'controls', '#8e44ad')
+    draw_arrow(ax, 10.5, 10.0, 10.5, 9.0,
+               'manages', '#27ae60')
+    draw_arrow(ax, 7.5, 11.0, 5.3, 3.5,
+               'deploys', '#c0392b')
+    draw_arrow(ax, 2.8, 9.5, 2.8, 9.0,
+               'contains', '#2980b9')
 
     plt.tight_layout()
     plt.savefig(
         'diagram_classes.png',
-        facecolor='#0d1117',
+        facecolor='white',
         bbox_inches='tight',
-        dpi=150
+        dpi=200
     )
-    print("Class diagram saved as 'diagram_classes.png'")
+    print("Class diagram saved!")
     plt.show(block=False)
     plt.pause(2)
     plt.close()
 
 
 def draw_flowchart():
-    """Generate Simulation Flowchart"""
-    fig, ax = plt.subplots(1, 1, figsize=(14, 20))
-    fig.patch.set_facecolor('#0d1117')
-    ax.set_facecolor('#0d1117')
+    """Generate Clean Light Flowchart"""
+    fig, ax = plt.subplots(1, 1, figsize=(14, 22))
+    fig.patch.set_facecolor('white')
+    ax.set_facecolor('#f8f9fa')
     ax.set_xlim(0, 14)
-    ax.set_ylim(0, 20)
+    ax.set_ylim(0, 22)
     ax.axis('off')
 
-    ax.text(7, 19.5,
+    ax.text(7, 21.5,
             'Project Hail Mary — Simulation Flowchart',
-            color='white', fontsize=14,
+            color='#1a1a2e', fontsize=16,
             fontweight='bold', ha='center')
 
-    def draw_box(ax, x, y, w, h, text,
-                 shape='rect', color='#58a6ff',
-                 text_color='white', fontsize=8):
-        if shape == 'diamond':
-            diamond = plt.Polygon(
-                [[x, y + h/2],
-                 [x + w/2, y + h],
-                 [x + w, y + h/2],
-                 [x + w/2, y]],
-                facecolor='#1a1a3e',
-                edgecolor=color,
-                linewidth=2
-            )
-            ax.add_patch(diamond)
-            ax.text(x + w/2, y + h/2, text,
-                    color=text_color,
-                    fontsize=fontsize,
-                    ha='center', va='center',
-                    fontweight='bold')
-        elif shape == 'oval':
-            ellipse = mpatches.Ellipse(
-                (x + w/2, y + h/2), w, h,
-                facecolor=color,
-                edgecolor='white',
-                linewidth=2
-            )
-            ax.add_patch(ellipse)
-            ax.text(x + w/2, y + h/2, text,
-                    color='white',
-                    fontsize=fontsize + 1,
-                    ha='center', va='center',
-                    fontweight='bold')
-        else:
-            box = FancyBboxPatch(
-                (x, y), w, h,
-                boxstyle="round,pad=0.1",
-                facecolor='#161b22',
-                edgecolor=color,
-                linewidth=2
-            )
-            ax.add_patch(box)
-            ax.text(x + w/2, y + h/2, text,
-                    color=text_color,
-                    fontsize=fontsize,
-                    ha='center', va='center',
-                    fontweight='bold')
+    def draw_rect(ax, x, y, w, h, text,
+                  bg='#d6eaf8', border='#2980b9',
+                  fontsize=8, text_color='#1a1a2e'):
+        box = FancyBboxPatch(
+            (x, y), w, h,
+            boxstyle="round,pad=0.1",
+            facecolor=bg,
+            edgecolor=border,
+            linewidth=2
+        )
+        ax.add_patch(box)
+        ax.text(x + w/2, y + h/2, text,
+                color=text_color,
+                fontsize=fontsize,
+                ha='center', va='center',
+                fontweight='bold',
+                wrap=True)
 
-    def draw_flow_arrow(ax, x1, y1, x2, y2,
-                        label='', color='#8b949e'):
+    def draw_diamond(ax, x, y, w, h, text,
+                     bg='#fef9e7', border='#f39c12',
+                     fontsize=8):
+        diamond = plt.Polygon(
+            [[x + w/2, y + h],
+             [x + w, y + h/2],
+             [x + w/2, y],
+             [x, y + h/2]],
+            facecolor=bg,
+            edgecolor=border,
+            linewidth=2
+        )
+        ax.add_patch(diamond)
+        ax.text(x + w/2, y + h/2, text,
+                color='#1a1a2e',
+                fontsize=fontsize,
+                ha='center', va='center',
+                fontweight='bold')
+
+    def draw_oval(ax, x, y, w, h, text, bg, border):
+        ellipse = mpatches.Ellipse(
+            (x + w/2, y + h/2), w, h,
+            facecolor=bg,
+            edgecolor=border,
+            linewidth=2.5
+        )
+        ax.add_patch(ellipse)
+        ax.text(x + w/2, y + h/2, text,
+                color='white',
+                fontsize=10,
+                ha='center', va='center',
+                fontweight='bold')
+
+    def arrow(ax, x1, y1, x2, y2,
+              label='', color='#555555'):
         ax.annotate(
             '',
             xy=(x2, y2), xytext=(x1, y1),
             arrowprops=dict(
                 arrowstyle='->', color=color,
-                lw=1.5
+                lw=2
             )
         )
         if label:
             mx = (x1 + x2) / 2 + 0.2
             my = (y1 + y2) / 2
             ax.text(mx, my, label,
-                    color=color, fontsize=7,
-                    ha='left')
+                    color=color, fontsize=8,
+                    fontweight='bold',
+                    bbox=dict(
+                        facecolor='white',
+                        edgecolor='none',
+                        alpha=0.9
+                    ))
 
     # START
-    draw_box(ax, 5, 18.5, 4, 0.7,
-             'START', shape='oval',
-             color='#3fb950')
+    draw_oval(ax, 4.5, 20.5, 5, 0.8,
+              'START', '#27ae60', '#1e8449')
 
-    # Initialise
-    draw_box(ax, 4, 17.3, 6, 0.8,
-             'Initialise Simulation\n'
-             '(Environment, Grace, Rocky, Taumoeba)',
-             color='#58a6ff')
+    # Init
+    draw_rect(ax, 3.5, 19.3, 7, 0.9,
+              'Initialise Simulation\n(Environment, Grace, Rocky, Taumoeba)',
+              '#d6eaf8', '#2980b9')
 
     # Grace wakes
-    draw_box(ax, 4, 16.2, 6, 0.8,
-             'Grace wakes from coma\n'
-             'Memory = 0, Knowledge = 0',
-             color='#58a6ff')
+    draw_rect(ax, 3.5, 18.1, 7, 0.9,
+              'Grace wakes from coma\nKnowledge = 0, No memory',
+              '#d6eaf8', '#2980b9')
 
     # Rocky encountered
-    draw_box(ax, 4, 15.1, 6, 0.8,
-             'Rocky encountered at Tau Ceti\n'
-             'Begin communication',
-             color='#FF69B4')
+    draw_rect(ax, 3.5, 16.9, 7, 0.9,
+              'Rocky encountered at Tau Ceti\nBegin sonar communication',
+              '#e8daef', '#8e44ad')
 
-    # Turn loop
-    draw_box(ax, 4.5, 14.0, 5, 0.7,
-             'BEGIN TURN',
-             color='#f0883e',
-             text_color='white')
-
-    # Grace action decision
-    draw_box(ax, 3.5, 12.6, 7, 1.1,
-             'Grace Action?\n'
-             'Energy < 15?',
-             shape='diamond',
-             color='#00FFFF')
-
-    # Rest
-    draw_box(ax, 0.5, 12.7, 2.5, 0.7,
-             'Grace Rests\n+20 Energy',
-             color='#00FFFF')
-
-    # Taumoeba viable?
-    draw_box(ax, 3.5, 11.2, 7, 1.1,
-             'Taumoeba Viable\nfor Earth?',
-             shape='diamond',
-             color='#3fb950')
-
-    # Deploy probe
-    draw_box(ax, 0.5, 11.3, 2.5, 0.7,
-             'Deploy\nBeetle Probe',
-             color='#9400D3')
-
-    # Enough samples?
-    draw_box(ax, 3.5, 9.8, 7, 1.1,
-             'Taumoeba Samples >= 2\nand Knowledge >= 20?',
-             shape='diamond',
-             color='#3fb950')
-
-    # Breed
-    draw_box(ax, 0.5, 9.9, 2.5, 0.7,
-             'Breed\nTaumoeba',
-             color='#3fb950')
-
-    # On planet?
-    draw_box(ax, 3.5, 8.5, 7, 1.0,
-             'Grace on Planet Adrian?',
-             shape='diamond',
-             color='#228B22')
-
-    # Collect
-    draw_box(ax, 0.5, 8.6, 2.5, 0.7,
-             'Collect\nSamples',
-             color='#228B22')
-
-    # Move
-    draw_box(ax, 4, 7.5, 6, 0.7,
-             'Move Toward Planet Adrian\n'
-             '(Avoid Astrophage hazards)',
-             color='#58a6ff')
-
-    # Rocky action
-    draw_box(ax, 4, 6.5, 6, 0.7,
-             'Rocky Actions:\n'
-             'Communicate, Share, Assist, Repair',
-             color='#FF69B4')
-
-    # Environment update
-    draw_box(ax, 4, 5.5, 6, 0.7,
-             'Environment Update:\n'
-             'Spread Astrophage + Equipment Failures',
-             color='#cc2200')
-
-    # Navigate probes
-    draw_box(ax, 4, 4.5, 6, 0.7,
-             'Navigate Beetle Probes\n'
-             'Check if reached Earth',
-             color='#9400D3')
-
-    # Check conditions
-    draw_box(ax, 3.5, 3.4, 7, 0.8,
-             'Mission Success?\n'
-             '(Earth saved + Probe reached Earth)',
-             shape='diamond',
-             color='#3fb950')
-
-    # Mission success
-    draw_box(ax, 10.5, 3.5, 3, 0.6,
-             'MISSION\nSUCCESS!',
-             color='#3fb950',
-             text_color='#3fb950')
-
-    # Aborted?
-    draw_box(ax, 3.5, 2.2, 7, 0.8,
-             'Mission Aborted?\n'
-             '(Grace health/energy = 0)',
-             shape='diamond',
-             color='#f85149')
-
-    # Mission failed
-    draw_box(ax, 10.5, 2.3, 3, 0.6,
-             'MISSION\nFAILED',
-             color='#f85149',
-             text_color='#f85149')
-
-    # Max turns?
-    draw_box(ax, 3.5, 1.0, 7, 0.9,
-             'Turn >= Max Turns?',
-             shape='diamond',
-             color='#f0883e')
-
-    # End
-    draw_box(ax, 5, 0.1, 4, 0.6,
-             'END', shape='oval',
-             color='#f85149')
-
-    # --- Arrows ---
-    draw_flow_arrow(ax, 7, 18.5, 7, 18.15)
-    draw_flow_arrow(ax, 7, 17.3, 7, 17.0)
-    draw_flow_arrow(ax, 7, 16.2, 7, 15.9)
-    draw_flow_arrow(ax, 7, 15.1, 7, 14.7)
-    draw_flow_arrow(ax, 7, 14.0, 7, 13.7)
+    # Begin turn
+    draw_rect(ax, 4.0, 15.8, 6, 0.8,
+              'BEGIN TURN',
+              '#fdebd0', '#e67e22', 10, '#7d3c00')
 
     # Grace energy check
-    draw_flow_arrow(ax, 7, 12.6, 7, 12.3, '', '#00FFFF')
-    draw_flow_arrow(ax, 3.5, 13.15, 3.0, 13.15, 'YES', '#00FFFF')
-    draw_flow_arrow(ax, 3.0, 13.15, 3.0, 13.05)
-    draw_flow_arrow(ax, 7, 11.2, 7, 10.9, 'NO', '#8b949e')
+    draw_diamond(ax, 3.5, 14.4, 7, 1.1,
+                 'Grace Energy < 15?')
 
-    # Taumoeba viable
-    draw_flow_arrow(ax, 3.5, 11.75, 3.0, 11.75, 'YES', '#3fb950')
-    draw_flow_arrow(ax, 3.0, 11.75, 3.0, 11.65)
-    draw_flow_arrow(ax, 7, 9.8, 7, 9.55, 'NO', '#8b949e')
+    # Rest box
+    draw_rect(ax, 0.3, 14.5, 2.8, 0.7,
+              'Grace Rests\n+20 Energy',
+              '#d5f5e3', '#27ae60')
 
-    # Enough samples
-    draw_flow_arrow(ax, 3.5, 10.35, 3.0, 10.35, 'YES', '#3fb950')
-    draw_flow_arrow(ax, 3.0, 10.35, 3.0, 10.25)
-    draw_flow_arrow(ax, 7, 8.5, 7, 8.25, 'NO', '#8b949e')
+    # Taumoeba viable?
+    draw_diamond(ax, 3.5, 13.0, 7, 1.1,
+                 'Taumoeba Viable\nfor Earth?',
+                 '#fef9e7', '#f39c12')
 
-    # On planet
-    draw_flow_arrow(ax, 3.5, 9.0, 3.0, 9.0, 'YES', '#228B22')
-    draw_flow_arrow(ax, 3.0, 9.0, 3.0, 8.95)
-    draw_flow_arrow(ax, 7, 7.5, 7, 7.2, 'NO', '#8b949e')
+    # Deploy probe
+    draw_rect(ax, 0.3, 13.1, 2.8, 0.7,
+              'Deploy\nBeetle Probe',
+              '#e8daef', '#8e44ad')
 
-    draw_flow_arrow(ax, 7, 7.5, 7, 7.2)
-    draw_flow_arrow(ax, 7, 6.5, 7, 6.2)
-    draw_flow_arrow(ax, 7, 5.5, 7, 5.2)
-    draw_flow_arrow(ax, 7, 4.5, 7, 4.2)
+    # Enough samples?
+    draw_diamond(ax, 3.5, 11.6, 7, 1.1,
+                 'Samples >= 2\nand Knowledge >= 20?',
+                 '#fef9e7', '#f39c12')
 
-    # Check conditions
-    draw_flow_arrow(ax, 10.5, 3.8, 10.5, 3.8, 'YES', '#3fb950')
-    draw_flow_arrow(ax, 7, 3.4, 7, 3.0, 'NO', '#8b949e')
-    draw_flow_arrow(ax, 10.5, 2.6, 10.5, 2.6, 'YES', '#f85149')
-    draw_flow_arrow(ax, 7, 2.2, 7, 1.9, 'NO', '#8b949e')
-    draw_flow_arrow(ax, 7, 1.0, 7, 0.7, 'YES', '#f0883e')
+    # Breed
+    draw_rect(ax, 0.3, 11.7, 2.8, 0.7,
+              'Breed\nTaumoeba',
+              '#d5f5e3', '#27ae60')
 
-    # Loop back arrow
+    # On planet?
+    draw_diamond(ax, 3.5, 10.2, 7, 1.1,
+                 'Grace on\nPlanet Adrian?',
+                 '#fef9e7', '#f39c12')
+
+    # Collect
+    draw_rect(ax, 0.3, 10.3, 2.8, 0.7,
+              'Collect\nSamples',
+              '#d5f5e3', '#27ae60')
+
+    # Move
+    draw_rect(ax, 3.5, 9.1, 7, 0.8,
+              'Move Toward Planet Adrian\n(Avoid Astrophage hazards)',
+              '#d6eaf8', '#2980b9')
+
+    # Rocky action
+    draw_rect(ax, 3.5, 8.0, 7, 0.8,
+              'Rocky Actions:\nCommunicate, Share, Assist, Repair',
+              '#e8daef', '#8e44ad')
+
+    # Environment update
+    draw_rect(ax, 3.5, 6.9, 7, 0.8,
+              'Environment Update:\nSpread Astrophage + Equipment Failures',
+              '#fadbd8', '#c0392b')
+
+    # Navigate probes
+    draw_rect(ax, 3.5, 5.8, 7, 0.8,
+              'Navigate Beetle Probes\nCheck if reached Earth',
+              '#e8daef', '#8e44ad')
+
+    # Mission success?
+    draw_diamond(ax, 3.5, 4.4, 7, 1.1,
+                 'Mission Success?\n(Earth saved + Probe reached Earth)',
+                 '#d5f5e3', '#27ae60')
+
+    # Success box
+    draw_rect(ax, 11.0, 4.5, 2.8, 0.7,
+              'MISSION\nSUCCESS!',
+              '#d5f5e3', '#27ae60',
+              text_color='#1e8449')
+
+    # Aborted?
+    draw_diamond(ax, 3.5, 3.0, 7, 1.1,
+                 'Mission Aborted?\n(Grace health/energy = 0)',
+                 '#fadbd8', '#c0392b')
+
+    # Failed box
+    draw_rect(ax, 11.0, 3.1, 2.8, 0.7,
+              'MISSION\nFAILED',
+              '#fadbd8', '#c0392b',
+              text_color='#922b21')
+
+    # Max turns?
+    draw_diamond(ax, 3.5, 1.6, 7, 1.1,
+                 'Turn >= Max Turns?',
+                 '#fef9e7', '#f39c12')
+
+    # END
+    draw_oval(ax, 4.5, 0.3, 5, 0.8,
+              'END', '#c0392b', '#922b21')
+
+    # Main flow arrows
+    arrow(ax, 7, 20.5, 7, 20.2)
+    arrow(ax, 7, 19.3, 7, 19.0)
+    arrow(ax, 7, 18.1, 7, 17.8)
+    arrow(ax, 7, 16.9, 7, 16.6)
+    arrow(ax, 7, 15.8, 7, 15.5)
+
+    # Energy check arrows
+    arrow(ax, 3.5, 14.95, 3.1, 14.95,
+          'YES', '#27ae60')
+    arrow(ax, 3.1, 14.95, 3.1, 14.85)
+    arrow(ax, 7, 14.4, 7, 14.1, 'NO', '#c0392b')
+
+    # Viable arrows
+    arrow(ax, 3.5, 13.55, 3.1, 13.55,
+          'YES', '#27ae60')
+    arrow(ax, 3.1, 13.55, 3.1, 13.45)
+    arrow(ax, 7, 13.0, 7, 12.7, 'NO', '#c0392b')
+
+    # Samples arrows
+    arrow(ax, 3.5, 12.15, 3.1, 12.15,
+          'YES', '#27ae60')
+    arrow(ax, 3.1, 12.15, 3.1, 12.05)
+    arrow(ax, 7, 11.6, 7, 11.3, 'NO', '#c0392b')
+
+    # Planet arrows
+    arrow(ax, 3.5, 10.75, 3.1, 10.75,
+          'YES', '#27ae60')
+    arrow(ax, 3.1, 10.75, 3.1, 10.65)
+    arrow(ax, 7, 10.2, 7, 9.9, 'NO', '#c0392b')
+
+    arrow(ax, 7, 9.1, 7, 8.8)
+    arrow(ax, 7, 8.0, 7, 7.7)
+    arrow(ax, 7, 6.9, 7, 6.6)
+    arrow(ax, 7, 5.8, 7, 5.5)
+
+    # Condition arrows
+    arrow(ax, 10.5, 4.95, 11.0, 4.85,
+          'YES', '#27ae60')
+    arrow(ax, 7, 4.4, 7, 4.1, 'NO', '#c0392b')
+    arrow(ax, 10.5, 3.55, 11.0, 3.45,
+          'YES', '#c0392b')
+    arrow(ax, 7, 3.0, 7, 2.7, 'NO', '#555555')
+    arrow(ax, 7, 1.6, 7, 1.1, 'YES', '#f39c12')
+
+    # Loop back
     ax.annotate(
         '',
-        xy=(13.5, 14.35), xytext=(13.5, 1.45),
+        xy=(13.5, 16.2), xytext=(13.5, 1.8),
         arrowprops=dict(
-            arrowstyle='->', color='#f0883e', lw=1.5
+            arrowstyle='->', color='#f39c12', lw=2
         )
     )
-    ax.plot([7, 13.5], [1.45, 1.45],
-            color='#f0883e', lw=1.5)
-    ax.plot([13.5, 13.5], [1.45, 14.35],
-            color='#f0883e', lw=1.5)
-    ax.plot([13.5, 9.5], [14.35, 14.35],
-            color='#f0883e', lw=1.5)
-    ax.text(13.7, 8.0, 'NO\n(next turn)',
-            color='#f0883e', fontsize=7)
+    ax.plot([7, 13.5], [1.8, 1.8],
+            color='#f39c12', lw=2)
+    ax.plot([13.5, 13.5], [1.8, 16.2],
+            color='#f39c12', lw=2)
+    ax.plot([13.5, 10.0], [16.2, 16.2],
+            color='#f39c12', lw=2)
+    ax.text(13.7, 9.0, 'NO\n(next\nturn)',
+            color='#f39c12', fontsize=8,
+            fontweight='bold')
 
     plt.tight_layout()
     plt.savefig(
         'diagram_flowchart.png',
-        facecolor='#0d1117',
+        facecolor='white',
         bbox_inches='tight',
-        dpi=150
+        dpi=200
     )
-    print("Flowchart saved as 'diagram_flowchart.png'")
+    print("Flowchart saved!")
     plt.show(block=False)
     plt.pause(2)
     plt.close()
 
 
 def draw_architecture():
-    """Generate System Architecture Diagram"""
-    fig, ax = plt.subplots(1, 1, figsize=(16, 10))
-    fig.patch.set_facecolor('#0d1117')
-    ax.set_facecolor('#0d1117')
-    ax.set_xlim(0, 16)
-    ax.set_ylim(0, 10)
+    """Generate Clean Light Architecture Diagram"""
+    fig, ax = plt.subplots(1, 1, figsize=(18, 12))
+    fig.patch.set_facecolor('white')
+    ax.set_facecolor('#f8f9fa')
+    ax.set_xlim(0, 18)
+    ax.set_ylim(0, 12)
     ax.axis('off')
 
-    ax.text(8, 9.6,
+    ax.text(9, 11.6,
             'Project Hail Mary — System Architecture',
-            color='white', fontsize=16,
+            color='#1a1a2e', fontsize=18,
             fontweight='bold', ha='center')
 
     def draw_component(ax, x, y, w, h,
-                       title, items, color):
+                       title, items,
+                       header_color, border_color):
+        # Shadow
+        shadow = FancyBboxPatch(
+            (x + 0.07, y - 0.07), w, h,
+            boxstyle="round,pad=0.15",
+            facecolor='#cccccc',
+            edgecolor='none',
+            zorder=1
+        )
+        ax.add_patch(shadow)
+
+        # Box
         box = FancyBboxPatch(
             (x, y), w, h,
             boxstyle="round,pad=0.15",
-            facecolor='#161b22',
-            edgecolor=color,
-            linewidth=2.5
+            facecolor='white',
+            edgecolor=border_color,
+            linewidth=2.5,
+            zorder=2
         )
         ax.add_patch(box)
 
-        # Title bar
-        title_bar = FancyBboxPatch(
-            (x, y + h - 0.5), w, 0.5,
+        # Header bar
+        header = FancyBboxPatch(
+            (x, y + h - 0.7), w, 0.7,
             boxstyle="round,pad=0.05",
-            facecolor=color,
-            edgecolor=color,
-            linewidth=1,
-            alpha=0.9
+            facecolor=header_color,
+            edgecolor=border_color,
+            linewidth=2,
+            zorder=3
         )
-        ax.add_patch(title_bar)
+        ax.add_patch(header)
 
-        ax.text(x + w/2, y + h - 0.25,
+        ax.text(x + w/2, y + h - 0.35,
                 title, color='white',
-                fontsize=9, fontweight='bold',
-                ha='center', va='center')
+                fontsize=10, fontweight='bold',
+                ha='center', va='center', zorder=4)
 
-        item_y = y + h - 0.8
+        item_y = y + h - 1.1
         for item in items:
-            ax.text(x + 0.2, item_y,
+            ax.text(x + 0.25, item_y,
                     f'• {item}',
-                    color='#c9d1d9',
-                    fontsize=7.5, va='center')
-            item_y -= 0.35
+                    color='#333333',
+                    fontsize=8, va='center', zorder=4)
+            item_y -= 0.38
 
     def draw_arch_arrow(ax, x1, y1, x2, y2,
-                        label='', color='#8b949e',
-                        style='->'):
+                        label='', color='#555555'):
         ax.annotate(
             '',
             xy=(x2, y2), xytext=(x1, y1),
             arrowprops=dict(
-                arrowstyle=style,
-                color=color, lw=1.5
+                arrowstyle='->', color=color,
+                lw=2
             )
         )
         if label:
             mx = (x1 + x2) / 2
             my = (y1 + y2) / 2
             ax.text(mx, my + 0.15, label,
-                    color=color, fontsize=7,
-                    ha='center',
+                    color=color, fontsize=8,
+                    ha='center', fontweight='bold',
                     bbox=dict(
-                        facecolor='#0d1117',
+                        facecolor='white',
                         edgecolor='none',
-                        alpha=0.7
+                        alpha=0.9
                     ))
 
-    # Main simulation engine
-    draw_component(
-        ax, 5.5, 6.5, 5, 2.8,
-        'SIMULATION ENGINE',
-        ['Main simulation loop',
-         'Turn-based step() function',
-         'Win/lose condition checking',
-         'Mission protocol enforcement',
-         'Beetle probe management'],
-        '#f0883e'
-    )
+    # Layer labels
+    ax.text(0.3, 10.8, 'LAYER 1: CORE ENGINE',
+            color='#e67e22', fontsize=9,
+            fontweight='bold', style='italic')
+    ax.text(0.3, 6.5, 'LAYER 2: AGENTS & ENTITIES',
+            color='#2980b9', fontsize=9,
+            fontweight='bold', style='italic')
+    ax.text(0.3, 2.3, 'LAYER 3: ANALYSIS & OUTPUT',
+            color='#8e44ad', fontsize=9,
+            fontweight='bold', style='italic')
 
-    # Environment
+    # Layer 1 backgrounds
+    layer1_bg = FancyBboxPatch(
+        (0.2, 7.0), 17.6, 3.6,
+        boxstyle="round,pad=0.1",
+        facecolor='#fef9e7',
+        edgecolor='#f39c12',
+        linewidth=1.5,
+        alpha=0.4,
+        zorder=0
+    )
+    ax.add_patch(layer1_bg)
+
+    layer2_bg = FancyBboxPatch(
+        (0.2, 2.7), 17.6, 4.1,
+        boxstyle="round,pad=0.1",
+        facecolor='#eaf2ff',
+        edgecolor='#2980b9',
+        linewidth=1.5,
+        alpha=0.4,
+        zorder=0
+    )
+    ax.add_patch(layer2_bg)
+
+    layer3_bg = FancyBboxPatch(
+        (0.2, 0.3), 17.6, 2.2,
+        boxstyle="round,pad=0.1",
+        facecolor='#f5eef8',
+        edgecolor='#8e44ad',
+        linewidth=1.5,
+        alpha=0.4,
+        zorder=0
+    )
+    ax.add_patch(layer3_bg)
+
+    # ENVIRONMENT
     draw_component(
-        ax, 0.3, 6.5, 4.5, 2.8,
+        ax, 0.5, 7.3, 5.2, 3.0,
         'ENVIRONMENT',
         ['20x20 procedural grid',
          'Astrophage spread system',
-         'Hazard zones',
-         'Time dilation zones',
+         'Hazard + time dilation zones',
+         'Petrova line',
          'Xenonite tunnel'],
-        '#58a6ff'
+        '#2980b9', '#1a5276'
     )
 
-    # Grace agent
+    # SIMULATION ENGINE
     draw_component(
-        ax, 0.3, 2.5, 4.5, 3.5,
+        ax, 6.4, 7.3, 5.2, 3.0,
+        'SIMULATION ENGINE',
+        ['Turn-based step() loop',
+         'Priority AI decisions',
+         'Win/lose conditions',
+         'Mission protocol',
+         'Equipment failure events'],
+        '#e67e22', '#d35400'
+    )
+
+    # VISUALISER
+    draw_component(
+        ax, 12.3, 7.3, 5.2, 3.0,
+        'VISUALISER',
+        ['Live 20x20 grid display',
+         'Real-time stats panel',
+         'Earth/Erid viability bars',
+         'Mission result screen',
+         'matplotlib TkAgg backend'],
+        '#16a085', '#0e6655'
+    )
+
+    # GRACE AGENT
+    draw_component(
+        ax, 0.5, 2.9, 5.2, 3.3,
         'GRACE AGENT',
         ['Priority-based AI decisions',
          'Online learning weights',
@@ -646,25 +718,12 @@ def draw_architecture():
          'Taumoeba experiments',
          'Beetle probe deployment',
          'Flashback events'],
-        '#00FFFF'
+        '#2ecc71', '#1e8449'
     )
 
-    # Rocky agent
+    # TAUMOEBA SYSTEM
     draw_component(
-        ax, 11.2, 2.5, 4.5, 3.5,
-        'ROCKY AGENT',
-        ['Sonar communication',
-         'Progressive trust system',
-         'Fuel transfer mechanic',
-         'Ship repairs',
-         'Reconnaissance scanning',
-         'Contamination system'],
-        '#FF69B4'
-    )
-
-    # Taumoeba
-    draw_component(
-        ax, 5.5, 2.5, 5, 3.5,
+        ax, 6.4, 2.9, 5.2, 3.3,
         'TAUMOEBA SYSTEM',
         ['Earth strain breeding',
          'Erid strain breeding',
@@ -672,81 +731,68 @@ def draw_architecture():
          'Astrophage consumption',
          'Resistance mechanic',
          'Generation tracking'],
-        '#3fb950'
+        '#27ae60', '#1a7a42'
     )
 
-    # Visualiser
+    # ROCKY AGENT
     draw_component(
-        ax, 11.2, 6.5, 4.5, 2.8,
-        'VISUALISER',
-        ['Live 20x20 grid display',
-         'Real-time stats panel',
-         'Earth/Erid viability bars',
-         'Mission result screen',
-         'Matplotlib TkAgg backend'],
-        '#9400D3'
+        ax, 12.3, 2.9, 5.2, 3.3,
+        'ROCKY AGENT',
+        ['Sonar communication',
+         'Progressive trust system',
+         'Fuel transfer mechanic',
+         'Ship repairs',
+         'Reconnaissance scanning',
+         'Contamination system'],
+        '#8e44ad', '#6c3483'
     )
 
-    # Statistics
+    # STATISTICS ENGINE
     draw_component(
-        ax, 0.3, 0.2, 15.4, 1.8,
-        'STATISTICS ENGINE (run_statistics.py)',
-        ['20 simulation runs | Success rate tracking | '
-         'Knowledge score analysis | '
-         'Taumoeba survival rates | '
+        ax, 0.5, 0.4, 17.0, 1.8,
+        'STATISTICS ENGINE  (run_statistics.py)',
+        ['20 simulation runs  |  '
+         'Success rate tracking  |  '
+         'Knowledge score analysis  |  '
+         'Taumoeba survival rates  |  '
          'Professional matplotlib graphs'],
-        '#d29922'
+        '#e74c3c', '#c0392b'
     )
 
     # Arrows
-    draw_arch_arrow(ax, 5.5, 8.0, 4.8, 8.0,
-                    'reads', '#58a6ff')
-    draw_arch_arrow(ax, 10.5, 8.0, 11.2, 8.0,
-                    'updates', '#9400D3')
-    draw_arch_arrow(ax, 7.5, 6.5, 5.5, 6.0,
-                    'controls', '#00FFFF')
-    draw_arch_arrow(ax, 9.0, 6.5, 10.5, 6.0,
-                    'controls', '#FF69B4')
-    draw_arch_arrow(ax, 8.0, 6.5, 8.0, 6.0,
-                    'manages', '#3fb950')
-    draw_arch_arrow(ax, 2.5, 2.5, 2.5, 2.3,
-                    '', '#00FFFF')
-    draw_arch_arrow(ax, 8.0, 2.5, 8.0, 2.3,
-                    '', '#3fb950')
-    draw_arch_arrow(ax, 13.5, 2.5, 13.5, 2.3,
-                    '', '#FF69B4')
-
-    # Layer labels
-    ax.text(0.1, 9.4, 'LAYER 1: CORE ENGINE',
-            color='#f0883e', fontsize=8,
-            fontweight='bold', style='italic')
-    ax.text(0.1, 6.0, 'LAYER 2: AGENTS & ENTITIES',
-            color='#58a6ff', fontsize=8,
-            fontweight='bold', style='italic')
-    ax.text(0.1, 2.1, 'LAYER 3: ANALYSIS',
-            color='#d29922', fontsize=8,
-            fontweight='bold', style='italic')
+    draw_arch_arrow(ax, 5.7, 8.8, 6.4, 8.8,
+                    'reads', '#2980b9')
+    draw_arch_arrow(ax, 11.6, 8.8, 12.3, 8.8,
+                    'updates', '#16a085')
+    draw_arch_arrow(ax, 8.0, 7.3, 4.0, 6.2,
+                    'controls', '#2ecc71')
+    draw_arch_arrow(ax, 9.0, 7.3, 9.0, 6.2,
+                    'manages', '#27ae60')
+    draw_arch_arrow(ax, 10.0, 7.3, 14.0, 6.2,
+                    'controls', '#8e44ad')
+    draw_arch_arrow(ax, 3.0, 2.9, 3.0, 2.2)
+    draw_arch_arrow(ax, 9.0, 2.9, 9.0, 2.2)
+    draw_arch_arrow(ax, 15.0, 2.9, 15.0, 2.2)
 
     plt.tight_layout()
     plt.savefig(
         'diagram_architecture.png',
-        facecolor='#0d1117',
+        facecolor='white',
         bbox_inches='tight',
-        dpi=150
+        dpi=200
     )
-    print("Architecture diagram saved as "
-          "'diagram_architecture.png'")
+    print("Architecture diagram saved!")
     plt.show(block=False)
     plt.pause(2)
     plt.close()
 
 
 if __name__ == "__main__":
-    print("Generating diagrams...")
+    print("Generating clean diagrams...")
     draw_class_diagram()
     print("Class diagram done!")
     draw_flowchart()
     print("Flowchart done!")
     draw_architecture()
     print("Architecture done!")
-    print("\nAll 3 diagrams saved as PNG files!")
+    print("\nAll 3 diagrams saved!")
